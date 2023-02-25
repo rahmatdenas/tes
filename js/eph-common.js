@@ -9,7 +9,7 @@ const OSM_LAYER_URL           = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.
 const OSM_LAYER_ATTRIBUTION   = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 const CARTO_LAYER_URL         = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png';
 const CARTO_LAYER_ATTRIBUTION = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (data), <a href="https://carto.com/">CARTO</a> (style)';
-const TILE_LAYER_MAX_ZOOM     = 19;
+const TILE_LAYER_MAX_ZOOM     = 10;
 const MIN_PH_LAT              =   1;
 const MAX_PH_LAT              =  4;
 const MIN_PH_LON              = 98.1;
