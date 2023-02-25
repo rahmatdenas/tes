@@ -10,10 +10,10 @@ const OSM_LAYER_ATTRIBUTION   = 'Base map &copy; <a href="https://www.openstreet
 const CARTO_LAYER_URL         = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png';
 const CARTO_LAYER_ATTRIBUTION = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (data), <a href="https://carto.com/">CARTO</a> (style)';
 const TILE_LAYER_MAX_ZOOM     = 19;
-const MIN_PH_LAT              =   4.5;
-const MAX_PH_LAT              =  21.0;
-const MIN_PH_LON              = 116.5;
-const MAX_PH_LON              = 126.5;
+const MIN_PH_LAT              =   3.5;
+const MAX_PH_LAT              =  1.2;
+const MIN_PH_LON              = 98.1;
+const MAX_PH_LON              = 102.1;
 
 // Globals
 var Records = {};        // Main app database, keyed by QID
