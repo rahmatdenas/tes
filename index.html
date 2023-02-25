@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Heritage Sites Map – Encyclopedia of Philippine Heritage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,600i,700|Merriweather:300,300i" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="css/leaflet.extra-markers.min.css" />
+<link rel="stylesheet" href="css/eph-common.css" />
+<link rel="stylesheet" href="css/eph-heritage-sites.css" />
+</head>
+<body>
+<section id="panel">
+  <header id="branding" role="banner">
+    <p>Encyclopedia of Philippine Heritage</p>
+    <h1>Heritage Sites Map</h1>
+  </header>
+  <nav>
+    <ul>
+      <li><a href="#index">Index</a></li>
+      <li><a href="#about">About</a></li>
+    </ul>
+  </nav>
+  <div id="loading" class="panel-content" data-display="flex">
+    <div class="loader"></div>
+  </div>
+  <section id="index" class="panel-content" data-display="flex">
+    <header>
+      <label for="filter">Filter</label>
+      <div id="filter">
+        <select>
+          <option value="all">All heritage sites – </option>
+        </select>
+      </div>
+    </header>
+    <ol id="index-list"></ol>
+  </section>
+  <section id="details" class="panel-content" data-display="block"><!-- dummy node --></section>
+  <section id="about" class="panel-content" data-display="block">
+    <p>This <b>Heritage Sites Map</b> shows the location of designated cultural and heritage sites of the Philippines.
+      Each heritage site is represented by a map marker that when clicked provides more information about the site.</p>
+    <img id="eph" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Encyclopedia_of_Philippine_Heritage_logo.svg/125px-Encyclopedia_of_Philippine_Heritage_logo.svg.png" alt="Encyclopedia of Philippine Heritage">
+    <p>The data on these heritage sites comes from <a href="https://www.wikidata.org/">Wikidata</a>, a sister
+      project of Wikipedia, and is compiled as part of the <i><b>Encyclopedia of Philippine Heritage</b></i>, a
+      program of <a href="http://www.wikimedia.org.ph/">Wikimedia Philippines</a>.</p>
+    <p>If you are familiar with the Wikidata Query Service and want to obtain or explore the raw data, please refer
+      to this <a href="#" id="wdqs-link">query</a>.</p>
+    <p>To report bugs, suggest improvements, or see the source code of this map app, please refer to this app’s
+      <a href="https://github.com/WMPH/eph-heritage-sites-map">GitHub repository</a>.</p>
+  </section>
+</section>
+<section id="map"></section>
+<script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="js/leaflet.extra-markers.min.js"></script>
+<script src="js/osmtogeojson.js"></script>
+<script src="js/load-jsonp.js"></script>
+<script src="js/eph-heritage-sites-globals.js"></script>
+<script src="js/eph-common.js"></script>
+<script src="js/eph-heritage-sites.js"></script>
+</body>
+</html>
