@@ -22,8 +22,9 @@ const DESIGNATION_TYPES = {
 }
 
 // 4. SPARQL_QUERY_0: Mengambil data lokasi dan LANGSUNG menarik Tahun Berdiri
+// 4. SPARQL_QUERY_0: Mengambil data masjid, filter wilayah, dan properti P131 langsung
 const SPARQL_QUERY_0 =
-`SELECT ?siteQid ?siteLabel ?designationQid ?tahunBerdiriMentah WHERE {
+`SELECT ?siteQid ?siteLabel ?designationQid ?p131Label ?tahunBerdiriMentah WHERE {
   {
     ?site wdt:P31 wd:Q32815 . 
     ?site wdt:P131+ ?designation .
@@ -31,7 +32,13 @@ const SPARQL_QUERY_0 =
   }
   ?site rdfs:label ?siteLabel . FILTER(LANG(?siteLabel) = "id") .
   
-  # Menarik tahun berdiri mentah dari Wikidata di langkah pertama
+  # AMBIL P131 LANGSUNG DARI ENTITAS MASJID BESERTA LABEL INDONESIANYA
+  OPTIONAL {
+    ?site wdt:P131 ?p131Lokasi .
+    ?p131Lokasi rdfs:label ?p131Label .
+    FILTER(LANG(?p131Label) = "id") .
+  }
+  
   OPTIONAL { ?site wdt:P571 ?tahunBerdiriMentah . }
   
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
