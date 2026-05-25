@@ -242,90 +242,17 @@ function generateRecordDetails(qid) {
   let figureHtml = generateFigure(record.imageFilename);
 
   // ====================================================================
-  // 1. MODIFIKASI LOOPING: Beri tanda 'data-filename' pada kotak pembungkus
+  // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
     record.vicinityImages.forEach(imgFilename => {
-      // Kosmetik murni generateFigure() DIJAMIN tidak berubah sama sekali
-      figureHtml += `<div class="vicinity-box" data-filename="${imgFilename}" style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
+      // Memanggil fungsi bawaan generateFigure() agar kosmetiknya
+      // (border, bayangan, kredit foto) otomatis sama persis.
+      // Diberi sela margin-top 20px agar jarak antar-gambar ke bawah rapi.
+      figureHtml += `<div style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
     });
   }
   // ====================================================================
-
-  let articleHtml;
-  if (record.articleTitle) {
-    articleHtml = '<div class="article main-text loading"><div class="loader"></div></div>';
-  }
-  else {
-    articleHtml = '<div class="article main-text nodata"><p>Situs ini belum memiliki artikel Wikipedia berbahasa Indonesia.</p></div>';
-  }
-
-  let designationsHtml = '<h2>Informasi</h2><ul class="designations">';
-  Object.keys(record.designations)
-    .map(qid => [qid, DESIGNATION_TYPES[qid].order]) 
-    .sort((a, b) => a[1] - b[1])
-    .map(item => item[0])
-    .forEach(designationQid => {
-      let type = DESIGNATION_TYPES[designationQid];
-      let infoTahunHtml = record.tahunBerdiri ? `<p>Didirikan: ${record.tahunBerdiri}</p>` : `<p>Didirikan: Data belum tersedia</p>`;
-      let teksLokasi = record.lokasiSpesifik || ORGS[type.org];
-      let infoLokasiHtml = `<p>Terletak di: ${teksLokasi}</p>`;
-
-      designationsHtml +=
-        '<li>' +
-          `<h3>${type.name}</h3>` +
-          '<div class="org">' +
-            `<img src="img/org_logo_${type.org.toLowerCase()}.svg">` + 
-          '</div>' +
-          infoLokasiHtml + 
-          infoTahunHtml +
-        '</li>';
-    });
-  designationsHtml += '</ul>';
-
-  let panelElem = document.createElement('div');
-  panelElem.innerHTML =
-    `<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/${qid}" title="Lihat di Wikidata">` +
-    '<img src="img/wikidata_tiny_logo.png" alt="[Lihat item Wikidata]" /></a>' +
-    titleHtml +
-    figureHtml + 
-    articleHtml +
-    designationsHtml;
-  record.panelElem = panelElem;
-
-  // ====================================================================
-  // 2. KODE BARU: EKSEKUSI INLINE FETCH (TANPA MEMBUAT FUNGSI BARU)
-  // ====================================================================
-  if (record.vicinityImages && record.vicinityImages.length > 0) {
-    panelElem.querySelectorAll('.vicinity-box').forEach(box => {
-      let filename = box.getAttribute('data-filename');
-      let url = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
-      
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          let page = Object.values(data.query.pages)[0];
-          if (page && page.imageinfo && page.imageinfo[0].extmetadata) {
-            let meta = page.imageinfo[0].extmetadata;
-            let artist = meta.Artist ? meta.Artist.value.replace(/<[^>]*>?/gm, '').trim() : 'Unknown';
-            let license = meta.LicenseShortName ? meta.LicenseShortName.value : 'Copyright';
-            let teksKredit = `${artist} [${license}]`;
-            
-            // Cari elemen bertuliskan Loading... khusus di dalam kotak gambar ini saja
-            let targetTeks = Array.from(box.querySelectorAll('*')).find(el => el.textContent.includes('Loading...'));
-            if (targetTeks) {
-              targetTeks.innerHTML = targetTeks.innerHTML.replace('(Loading...)', teksKredit);
-            }
-          }
-        })
-        .catch(err => console.log('Gagal memuat kredit gambar tambahan:', err));
-    });
-  }
-  // ====================================================================
-
-  if (record.articleTitle) displayArticleExtract(record.articleTitle, panelElem.querySelector('.article'));
-  queryOsm(qid);
-}
 
   let articleHtml;
   if (record.articleTitle) {
