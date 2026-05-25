@@ -85,8 +85,34 @@ function populateImageAndWikipediaData() {
     SPARQL_QUERY_3,
     function(result) {
       let record = Records[result.siteQid.value];
-      if ('image' in result) record.imageFilename = extractImageFilename(result.image);
-      if ('wikipediaUrlTitle' in result) record.articleTitle = decodeURIComponent(result.wikipediaUrlTitle.value);
+      
+      // 1. Gambar Utama
+      if ('image' in result) {
+        record.imageFilename = extractImageFilename(result.image);
+      }
+      
+      // 2. Artikel Wikipedia
+      if ('wikipediaUrlTitle' in result) {
+        record.articleTitle = decodeURIComponent(result.wikipediaUrlTitle.value);
+      }
+
+      // ====================================================================
+      // KODE BARU: SKENARIO PINTAR UNTUK GAMBAR LINGKUNGAN SEKITAR
+      // ====================================================================
+      
+      // Inisialisasi array daftar gambar tambahan jika belum ada
+      if (!record.vicinityImages) {
+        record.vicinityImages = [];
+      }
+
+      // Masukkan gambar lingkungan sekitar ke dalam daftar (pastikan tidak duplikat)
+      if ('vicinityImage' in result) {
+        let fotoTambahan = extractImageFilename(result.vicinityImage);
+        if (!record.vicinityImages.includes(fotoTambahan)) {
+          record.vicinityImages.push(fotoTambahan);
+        }
+      }
+      // ====================================================================
     },
   );
 }
