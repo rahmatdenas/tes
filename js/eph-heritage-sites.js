@@ -241,24 +241,22 @@ function generateRecordDetails(qid) {
   let titleHtml = `<h1>${record.title}</h1>`;
   let figureHtml = generateFigure(record.imageFilename);
 
-  // ====================================================================
+// ====================================================================
   // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
     record.vicinityImages.forEach((imgFilename, index) => {
       let uniqueId = `kredit-${qid}-${index}`;
       
-      // 1. Panggil fungsi bawaan agar kosmetik (border, font) 100% sempurna
       let htmlBawaan = generateFigure(imgFilename);
       
-      // 2. Ganti teks (Loading...) dengan ID unik agar bisa diakses oleh fungsi penarik kredit
-      let htmlDimodifikasi = htmlBawaan.replace('(Loading...)', `<span id="${uniqueId}">(Loading...)</span>`);
+      // Menggunakan Regex agar pencarian (Loading...) lebih tangguh dan akurat
+      let htmlDimodifikasi = htmlBawaan.replace(/\(Loading\.\.\.\)/i, `<span id="${uniqueId}">(Loading...)</span>`);
       
-      // 3. Tambahkan ke figureHtml dengan margin untuk kerapian
       figureHtml += `<div style="margin-top: 20px;">${htmlDimodifikasi}</div>`;
       
-      // 4. Panggil fungsi penarik kredit dengan sedikit jeda agar elemen DOM siap
-      setTimeout(() => { ambilKreditMandiri(imgFilename, uniqueId); }, 500);
+      // Langsung tembak! Operkan juga 'qid' agar bisa dicari di belakang panggung
+      ambilKreditMandiri(imgFilename, uniqueId, qid); 
     });
   }
   // ====================================================================
@@ -449,8 +447,9 @@ class CompoundRecord extends Record {
 // ============================================================
 // FUNGSI TAMBAHAN UNTUK KREDIT FOTO MULTIPLE
 // ------------------------------------------------------------
-function ambilKreditMandiri(filename, elementId) {
-  let url = `https://en.wikipedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
+function ambilKreditMandiri(filename, elementId, qid) {
+  // Langsung tembak ke server Commons tempat foto bernaung
+  let url = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
   
   fetch(url)
     .then(response => response.json())
@@ -466,13 +465,20 @@ function ambilKreditMandiri(filename, elementId) {
         teksKredit = `${artist} [${license}]`;
       }
       
-      let elemenKredit = document.getElementById(elementId);
-      if (elemenKredit) {
-        elemenKredit.innerHTML = teksKredit;
+      // KUNCI UTAMA: Cari elemennya langsung di memori panel, BUKAN di document layar
+      let record = Records[qid];
+      if (record && record.panelElem) {
+        let elemenKredit = record.panelElem.querySelector(`#${elementId}`);
+        if (elemenKredit) {
+          elemenKredit.innerHTML = teksKredit;
+        }
       }
     })
     .catch(err => {
-      let elemenKredit = document.getElementById(elementId);
-      if (elemenKredit) elemenKredit.innerHTML = 'Gagal memuat kredit';
+      let record = Records[qid];
+      if (record && record.panelElem) {
+        let elemenKredit = record.panelElem.querySelector(`#${elementId}`);
+        if (elemenKredit) elemenKredit.innerHTML = 'Gagal memuat kredit';
+      }
     });
 }
