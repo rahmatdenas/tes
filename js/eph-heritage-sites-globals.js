@@ -1,71 +1,72 @@
 'use strict';
 
-// Constants and fixed parameters
-const BASE_TITLE = 'Heritage Sites Map – Encyclopedia of Philippine Heritage';
+// 1. UBAH JUDUL PETA
+const BASE_TITLE = 'Peta Persebaran Masjid – Sumatera Barat';
+
+// 2. ORGS: Kita akali menjadi singkatan nama daerah untuk label
 const ORGS = {
-  NHCP   : 'National Historical Commission of the Philippines',
-  NM     : 'National Museum',
-  DENR   : 'Department of Environment and Natural Resources',
-  WHC    : 'UNESCO World Heritage Committee',
-  RAMSAR : 'Ramsar Convention',
-  ASEAN  : 'ASEAN Center for Biodiversity',
+  PDG: 'Kota Padang',
+  PRM: 'Kota Pariaman',
+  BKT: 'Kota Bukittinggi',
+  AGM: 'Kabupaten Agam',
+  // Tambahkan singkatan lain jika perlu
 }
+
+// 3. DESIGNATION_TYPES: Kita akali dengan ID Wikidata Kabupaten/Kota
+// Ini yang akan dibaca oleh Dropdown template Anda
 const DESIGNATION_TYPES = {
-  Q32815 : { org: 'NHCP'  , name: 'National Historical Landmark' , order: 101 },
+  Q7253 : { org: 'PDG', name: 'Kota Padang'      , order: 1 },
+  Q7248 : { org: 'BKT', name: 'Kota Bukittingg'    , order: 2 },
+  Q7258 : { org: 'PRM', name: 'Kota Pariaman' , order: 3 },
+  // Tambahkan ID Kab/Kota lain di sini dan pastikan urutannya (order) diteruskan
 }
+
+// 4. SPARQL_QUERY_0: Mengambil data dan "menipu" variabel designation
 const SPARQL_QUERY_0 =
 `SELECT ?siteQid ?siteLabel ?designationQid WHERE {
-  # National heritage site designations
   {
-    ?site wdt:P31 ?designation .
-  ?site wdt:P131 ?nagari.
-  ?nagari wdt:P131 ?kec.
-  ?kec wdt:P131 ?kabkota.  
-  ?kabkota wdt:P131 wd:Q2772.
+    # Ganti wd:Q32 dengan ID Cagar Budaya/Situs jika bukan mencari Masjid
+    ?site wdt:P31 wd:Q32815 . 
+    
+    # Gunakan P131+ (rekursif) agar otomatis melacak dari Nagari -> Kec -> Kab/Kota
+    ?site wdt:P131+ ?designation .
+    
+    # Masukkan QID Kab/Kota yang sama dengan yang ada di DESIGNATION_TYPES
     FILTER ( ?designation IN (
-      wd:Q32815  # National Historical Landmark
+      wd:Q7253, wd:Q7248, wd:Q7258
     ))
   }
   ?site rdfs:label ?siteLabel . FILTER(LANG(?siteLabel) = "id") .
+  
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
+  # Sistem JavaScript sekarang mengira Kab/Kota adalah Designation!
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
 } ORDER BY ?siteLabel`;
+
+// 5. SPARQL_QUERY_1: Tetap sama (Hanya mengambil koordinat P625)
 const SPARQL_QUERY_1 =
 `SELECT ?siteQid ?coord WHERE {
   <SPARQLVALUESCLAUSE>
   ?site p:P625 ?coordStatement .
   ?coordStatement ps:P625 ?coord .
-  # Do not include coordinates for parts
   FILTER NOT EXISTS { ?coordStatement pq:P518 ?x }
   BIND (SUBSTR(STR(?site), 32) AS ?siteQid) .
 }`;
-//    ?site wdt:P527 ?sitePart .
+
+// 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
 const SPARQL_QUERY_2 =
-`SELECT ?siteQid ?designationQid ?declared ?declaredPrecision
-       ?declaration ?declarationTitle ?declarationScan ?declarationText WHERE {
+`SELECT ?siteQid ?designationQid WHERE {
   <SPARQLVALUESCLAUSE>
-  ?site p:P31 ?designationStatement .
-  ?designationStatement ps:P31 ?designation .
+  ?site wdt:P131+ ?designation .
   FILTER ( ?designation IN (
-    wd:Q32815  # National Historical Landmark
+    wd:Q7253, wd:Q7248, wd:Q7258
   ))
-  OPTIONAL {
-    ?designationStatement pqv:P580 ?declaredValue .
-    ?declaredValue wikibase:timeValue ?declared ;
-                   wikibase:timePrecision ?declaredPrecision .
-  }
-  OPTIONAL {
-    ?designationStatement pq:P457 ?declaration .
-    ?declaration wdt:P1476 ?declarationTitle .
-    OPTIONAL { ?declaration wdt:P996 ?declarationScan }
-    OPTIONAL {
-      ?declarationText schema:about ?declaration ;
-                       schema:isPartOf <https://en.wikisource.org/> .
-    }
-  }
+  
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
 }`;
+
+// 7. SPARQL_QUERY_3: Tetap sama (Mengambil gambar dan link Wikipedia)
 const SPARQL_QUERY_3 =
 `SELECT ?siteQid ?image ?wikipediaUrlTitle WHERE {
   <SPARQLVALUESCLAUSE>
@@ -77,26 +78,20 @@ const SPARQL_QUERY_3 =
   BIND (SUBSTR(STR(?site        ), 32) AS ?siteQid          ) .
   BIND (SUBSTR(STR(?wikipediaUrl), 31) AS ?wikipediaUrlTitle) .
 }`;
+
+// 8. ABOUT_SPARQL_QUERY: Disesuaikan menggunakan logika wilayah, bukan tipe cagar
 const ABOUT_SPARQL_QUERY =
-`SELECT ?site ?siteLabel ?designationLabel ?declared ?declaration ?declarationTitle
-       ?coord ?image ?wikipedia WHERE {
-  # National heritage site designations
+`SELECT ?site ?siteLabel ?designationLabel ?coord ?image ?wikipedia WHERE {
   {
-    ?site p:P31 ?designationStatement .
-    ?designationStatement ps:P31 ?designation .
+    ?site wdt:P31 wd:Q32815 . # Masjid
+    ?site wdt:P131+ ?designation .
     FILTER ( ?designation IN (
-      wd:Q32815  # National Historical Landmark
+      wd:Q7253, wd:Q7248, wd:Q7258
     ))
-  }
-  OPTIONAL { ?designationStatement pq:P580 ?declared }
-  OPTIONAL {
-    ?designationStatement pq:P457 ?declaration .
-    ?declaration wdt:P1476 ?declarationTitle .
   }
   OPTIONAL {
     ?site p:P625 ?coordStatement .
     ?coordStatement ps:P625 ?coord .
-    # Do not include coordinates for parts
     FILTER NOT EXISTS { ?coordStatement pq:P518 ?x }
   }
   OPTIONAL { ?site wdt:P18 ?image }
@@ -104,8 +99,8 @@ const ABOUT_SPARQL_QUERY =
     ?wikipedia schema:about ?site ;
                schema:isPartOf <https://id.wikipedia.org/> .
   }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "id,en" }
 }`;
 
 // Globals
-var DesignationIndex;  // Index of designation types
+var DesignationIndex;
