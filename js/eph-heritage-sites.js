@@ -55,15 +55,6 @@ function populateDesignationTypesData() {
       if (!(designationQid in record.designations)) {
         record.designations[designationQid] = new Designation();
       }
-
-      // ==========================================
-      // RADAR PELACAK: Menyala saat web pertama kali dibuka
-      console.log("CEK DATA AWAL:", record.title, result);
-      // ==========================================
-
-      if (!record.tahunBerdiri && 'tahunBerdiriMentah' in result) {
-        record.tahunBerdiri = result.tahunBerdiriMentah.value.substring(0, 4);
-      }
     },
     function() {
       populateDesignationIndex();
@@ -93,8 +84,24 @@ function populateCoordinatesData() {
 
 // Queries WDQS and sets the subfields of the "designations" Records field.
 function populateDesignationDetailsData() {
-  // Langsung selesaikan proses tanpa perlu bertanya ke Wikidata lagi
-  return Promise.resolve();
+  return queryWdqsThenProcess(
+    SPARQL_QUERY_2,
+    function(result) {
+      let record = Records[result.siteQid.value];
+
+      // Jika data waktu didapat dari Wikidata, langsung potong 4 digit tahunnya
+      if (!record.tahunBerdiri && 'waktu' in result) {
+        record.tahunBerdiri = result.waktu.value.substring(0, 4);
+        
+        // Jurus Dobrak Cache: Hapus panel lama dan buat ulang jika sedang diklik
+        record.panelElem = undefined; 
+        let currentActiveQid = window.location.hash.replace('#', '');
+        if (currentActiveQid === result.siteQid.value) {
+          displayRecordDetails(result.siteQid.value);
+        }
+      }
+    },
+  );
 }
 
 // Queries WDQS and sets the "imageFilename" and "articleTitle" Records fields.
