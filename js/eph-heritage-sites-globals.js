@@ -59,21 +59,28 @@ const SPARQL_QUERY_1 =
 
 // 6. SPARQL_QUERY_3: Tetap sama (Mengambil gambar dan link Wikipedia)
 const SPARQL_QUERY_3 =
-`SELECT ?siteQid ?image ?vicinityImage WHERE {
+`SELECT ?siteQid ?image ?vicinityImage ?wikipediaUrlTitle WHERE {
   <SPARQLVALUESCLAUSE>
   
-  # 1. AMBIL GAMBAR UTAMA (Yang TIDAK MEMILIKI kualifikasi lingkungan sekitar)
+  # 1. AMBIL GAMBAR UTAMA
   OPTIONAL {
     ?site p:P18 ?imageStatement .
     ?imageStatement ps:P18 ?image .
     FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16189205 }
   }
   
-  # 2. AMBIL GAMBAR LINGKUNGAN SEKITAR (Yang MEMILIKI kualifikasi lingkungan sekitar)
+  # 2. AMBIL GAMBAR LINGKUNGAN SEKITAR
   OPTIONAL {
     ?site p:P18 ?vicinityStatement .
     ?vicinityStatement ps:P18 ?vicinityImage .
     FILTER EXISTS { ?vicinityStatement pq:P3831 wd:Q16189205 }
+  }
+
+  # 3. ARTIKEL WIKIPEDIA (Telah dikembalikan)
+  OPTIONAL {
+    ?wikipedia schema:about ?site ;
+               schema:isPartOf <https://id.wikipedia.org/> .
+    BIND (SUBSTR(STR(?wikipedia), 31) AS ?wikipediaUrlTitle) .
   }
   
   BIND (SUBSTR(STR(?site), 32) AS ?siteQid) .
