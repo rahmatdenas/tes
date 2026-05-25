@@ -246,17 +246,16 @@ function generateRecordDetails(qid) {
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
     record.vicinityImages.forEach((imgFilename, index) => {
-      let uniqueId = `kredit-${qid}-${index}`;
       
+      let uniqueId = `bungkus-kredit-${qid}-${index}`;
       let htmlBawaan = generateFigure(imgFilename);
       
-      // Menggunakan Regex agar pencarian (Loading...) lebih tangguh dan akurat
-      let htmlDimodifikasi = htmlBawaan.replace(/\(Loading\.\.\.\)/i, `<span id="${uniqueId}">(Loading...)</span>`);
+      // Kita BUNGKUS kosmetik asli Anda di dalam div milik kita
+      figureHtml += `<div id="${uniqueId}" style="margin-top: 20px;">${htmlBawaan}</div>`;
       
-      figureHtml += `<div style="margin-top: 20px;">${htmlDimodifikasi}</div>`;
+      // Panggil fungsi penarik data
+      ambilKreditMandiri(imgFilename, uniqueId, qid);
       
-      // Langsung tembak! Operkan juga 'qid' agar bisa dicari di belakang panggung
-      ambilKreditMandiri(imgFilename, uniqueId, qid); 
     });
   }
   // ====================================================================
@@ -445,10 +444,9 @@ class CompoundRecord extends Record {
 }
 
 // ============================================================
-// FUNGSI TAMBAHAN UNTUK KREDIT FOTO MULTIPLE
+// FUNGSI TAMBAHAN UNTUK KREDIT FOTO MULTIPLE (ANTI-GAGAL)
 // ------------------------------------------------------------
 function ambilKreditMandiri(filename, elementId, qid) {
-  // Langsung tembak ke server Commons tempat foto bernaung
   let url = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
   
   fetch(url)
@@ -465,20 +463,22 @@ function ambilKreditMandiri(filename, elementId, qid) {
         teksKredit = `${artist} [${license}]`;
       }
       
-      // KUNCI UTAMA: Cari elemennya langsung di memori panel, BUKAN di document layar
-      let record = Records[qid];
-      if (record && record.panelElem) {
-        let elemenKredit = record.panelElem.querySelector(`#${elementId}`);
-        if (elemenKredit) {
-          elemenKredit.innerHTML = teksKredit;
-        }
-      }
-    })
-    .catch(err => {
-      let record = Records[qid];
-      if (record && record.panelElem) {
-        let elemenKredit = record.panelElem.querySelector(`#${elementId}`);
-        if (elemenKredit) elemenKredit.innerHTML = 'Gagal memuat kredit';
-      }
+      // METODE ANTI-GAGAL: Scanner akan mencari elemen berulang kali selama 5 detik
+      let pencarian = setInterval(() => {
+         // 1. Cari kotak bungkusnya (baik di layar maupun di memori)
+         let bungkus = document.getElementById(elementId);
+         if (!bungkus && Records[qid] && Records[qid].panelElem) {
+            bungkus = Records[qid].panelElem.querySelector(`#${elementId}`);
+         }
+
+         // 2. Jika bungkusnya ketemu, ganti teks loading secara paksa di dalamnya
+         if (bungkus && bungkus.innerHTML.includes('Loading...')) {
+            bungkus.innerHTML = bungkus.innerHTML.replace(/\(Loading\.\.\.\)/i, teksKredit);
+            clearInterval(pencarian); // Tugas selesai, matikan scanner
+         }
+      }, 200);
+
+      // Matikan scanner otomatis setelah 5 detik agar memori browser tetap ringan
+      setTimeout(() => clearInterval(pencarian), 5000);
     });
 }
