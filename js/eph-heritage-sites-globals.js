@@ -55,12 +55,16 @@ const SPARQL_QUERY_1 =
 
 // 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
 const SPARQL_QUERY_2 =
-`SELECT ?siteQid ?designationQid WHERE {
+`SELECT ?siteQid ?designationQid ?tahunBerdiri WHERE {
   <SPARQLVALUESCLAUSE>
+  
   ?site wdt:P131+ ?designation .
   FILTER ( ?designation IN (
-    wd:Q7253, wd:Q7248, wd:Q7258
+    wd:Q14170, wd:Q14188, wd:Q14165, wd:Q11029
   ))
+  
+  # Memanggil P571 (Tahun Berdiri)
+  OPTIONAL { ?site wdt:P571 ?tahunBerdiri . }
   
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
