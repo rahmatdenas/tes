@@ -241,15 +241,35 @@ function generateRecordDetails(qid) {
   let titleHtml = `<h1>${record.title}</h1>`;
   let figureHtml = generateFigure(record.imageFilename);
 
-  // ====================================================================
-  // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
+ // ====================================================================
+  // KODE BARU: SKENARIO PINTAR (DENGAN KREDIT OTOMATIS)
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
-    record.vicinityImages.forEach(imgFilename => {
-      // Memanggil fungsi bawaan generateFigure() agar kosmetiknya
-      // (border, bayangan, kredit foto) otomatis sama persis.
-      // Diberi sela margin-top 20px agar jarak antar-gambar ke bawah rapi.
-      figureHtml += `<div style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
+    record.vicinityImages.forEach((imgFilename, index) => {
+      
+      // Buat ID unik agar teks kredit tidak saling tertukar
+      let uniqueId = `kredit-${qid}-${index}`;
+      
+      // Menggunakan trik Special:FilePath untuk memuat resolusi pas dari Commons
+      let encodedFile = encodeURIComponent(imgFilename.replace(/ /g, '_'));
+      let imgUrl = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodedFile}?width=400`;
+
+      // Meniru gaya kosmetik template (bingkai dan garis tepi)
+      figureHtml += `
+        <div style="clear: right; margin-top: 15px;">
+          <figure style="margin: 0;">
+            <img src="${imgUrl}" style="width: 100%; border: 1px solid #7ebec5; padding: 3px;" alt="Gambar Tambahan">
+            <figcaption id="${uniqueId}" style="font-size: 0.8em; color: #888; margin-top: 5px; text-align: right; border-bottom: 1px dotted #ccc; padding-bottom: 3px;">
+              (Loading...)
+            </figcaption>
+          </figure>
+        </div>
+      `;
+
+      // Perintahkan browser mengambil kredit spesifik untuk ID ini
+      // Menggunakan setTimeout agar menunggu HTML selesai digambar di panel
+      setTimeout(() => { ambilKreditMandiri(imgFilename, uniqueId); }, 500);
+      
     });
   }
   // ====================================================================
@@ -435,4 +455,35 @@ class CompoundRecord extends Record {
     super(true);
     this.parts = []; 
   }
+}
+
+function ambilKreditMandiri(filename, elementId) {
+  // Hubungi API Wikipedia secara aman melintasi domain (CORS)
+  let url = `https://en.wikipedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
+  
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      let pages = data.query.pages;
+      let page = Object.values(pages)[0];
+      let teksKredit = 'Kredit tidak diketahui';
+      
+      // Jika data fotografer ditemukan, format teksnya
+      if (page && page.imageinfo && page.imageinfo[0].extmetadata) {
+        let meta = page.imageinfo[0].extmetadata;
+        let artist = meta.Artist ? meta.Artist.value.replace(/<[^>]*>?/gm, '').trim() : 'Unknown';
+        let license = meta.LicenseShortName ? meta.LicenseShortName.value : 'Copyright';
+        teksKredit = `${artist} [${license}]`;
+      }
+      
+      // Tembakkan langsung ke KTP (ID Unik) yang tepat
+      let elemenKredit = document.getElementById(elementId);
+      if (elemenKredit) {
+        elemenKredit.innerHTML = teksKredit;
+      }
+    })
+    .catch(err => {
+      let elemenKredit = document.getElementById(elementId);
+      if (elemenKredit) elemenKredit.innerHTML = 'Gagal memuat kredit';
+    });
 }
