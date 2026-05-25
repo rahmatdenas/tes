@@ -56,9 +56,13 @@ function populateDesignationTypesData() {
         record.designations[designationQid] = new Designation();
       }
 
-      // TANGKAP TAHUN BERDIRI DI SINI SEBELUM UI DIGAMBAR!
-      if (!record.tahunBerdiri && 'waktu' in result) {
-        record.tahunBerdiri = result.waktu.value.substring(0, 4);
+      // ==========================================
+      // RADAR PELACAK: Menyala saat web pertama kali dibuka
+      console.log("CEK DATA AWAL:", record.title, result);
+      // ==========================================
+
+      if (!record.tahunBerdiri && 'tahunBerdiriMentah' in result) {
+        record.tahunBerdiri = result.tahunBerdiriMentah.value.substring(0, 4);
       }
     },
     function() {
@@ -68,7 +72,6 @@ function populateDesignationTypesData() {
     },
   );
 }
-
 
 // Queries WDQS, sets the "lat" and "lon" Records fields, and sets the
 // BootstrapDataIsLoaded status.
