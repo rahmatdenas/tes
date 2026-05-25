@@ -242,7 +242,7 @@ Object.keys(record.designations)
 
     // 2. Format Terletak di (Dibuat seragam dengan tag <p> dan ditebalkan)
     let teksLokasi = record.lokasiSpesifik || ORGS[type.org];
-    let infoLokasiHtml = `<p><b>Terletak di</b> ${teksLokasi}</p>`;
+    let infoLokasiHtml = `<p>Terletak di: ${teksLokasi}</p>`;
 
     designationsHtml +=
       '<li>' +
