@@ -245,11 +245,20 @@ function generateRecordDetails(qid) {
   // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
-    record.vicinityImages.forEach(imgFilename => {
-      // Memanggil fungsi bawaan generateFigure() agar kosmetiknya
-      // (border, bayangan, kredit foto) otomatis sama persis.
-      // Diberi sela margin-top 20px agar jarak antar-gambar ke bawah rapi.
-      figureHtml += `<div style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
+    record.vicinityImages.forEach((imgFilename, index) => {
+      let uniqueId = `kredit-${qid}-${index}`;
+      
+      // 1. Panggil fungsi bawaan agar kosmetik (border, font) 100% sempurna
+      let htmlBawaan = generateFigure(imgFilename);
+      
+      // 2. Ganti teks (Loading...) dengan ID unik agar bisa diakses oleh fungsi penarik kredit
+      let htmlDimodifikasi = htmlBawaan.replace('(Loading...)', `<span id="${uniqueId}">(Loading...)</span>`);
+      
+      // 3. Tambahkan ke figureHtml dengan margin untuk kerapian
+      figureHtml += `<div style="margin-top: 20px;">${htmlDimodifikasi}</div>`;
+      
+      // 4. Panggil fungsi penarik kredit dengan sedikit jeda agar elemen DOM siap
+      setTimeout(() => { ambilKreditMandiri(imgFilename, uniqueId); }, 500);
     });
   }
   // ====================================================================
@@ -435,4 +444,35 @@ class CompoundRecord extends Record {
     super(true);
     this.parts = []; 
   }
+}
+
+// ============================================================
+// FUNGSI TAMBAHAN UNTUK KREDIT FOTO MULTIPLE
+// ------------------------------------------------------------
+function ambilKreditMandiri(filename, elementId) {
+  let url = `https://en.wikipedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
+  
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      let pages = data.query.pages;
+      let page = Object.values(pages)[0];
+      let teksKredit = 'Kredit tidak diketahui';
+      
+      if (page && page.imageinfo && page.imageinfo[0].extmetadata) {
+        let meta = page.imageinfo[0].extmetadata;
+        let artist = meta.Artist ? meta.Artist.value.replace(/<[^>]*>?/gm, '').trim() : 'Unknown';
+        let license = meta.LicenseShortName ? meta.LicenseShortName.value : 'Copyright';
+        teksKredit = `${artist} [${license}]`;
+      }
+      
+      let elemenKredit = document.getElementById(elementId);
+      if (elemenKredit) {
+        elemenKredit.innerHTML = teksKredit;
+      }
+    })
+    .catch(err => {
+      let elemenKredit = document.getElementById(elementId);
+      if (elemenKredit) elemenKredit.innerHTML = 'Gagal memuat kredit';
+    });
 }
