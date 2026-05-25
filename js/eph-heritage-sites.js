@@ -45,9 +45,13 @@ function populateDesignationTypesData() {
         record.designations[designationQid] = new Designation();
       }
       
-      // ==========================================
-      // PENANGKAP TAHUN BERDIRI (DARI QUERY 0)
-      // ==========================================
+      // ============================================================
+      // KODE BARU: Simpan label P131 langsung milik masjid ke record
+      // ============================================================
+      if ('p131Label' in result && result.p131Label.value) {
+        record.lokasiSpesifik = result.p131Label.value;
+      }
+
       if (!record.tahunBerdiri && result.tahunBerdiriMentah && result.tahunBerdiriMentah.value) {
         record.tahunBerdiri = result.tahunBerdiriMentah.value.substring(0, 4);
       }
@@ -59,7 +63,6 @@ function populateDesignationTypesData() {
     },
   );
 }
-
 function populateCoordinatesData() {
   return queryWdqsThenProcess(
     SPARQL_QUERY_1,
@@ -221,13 +224,14 @@ function generateRecordDetails(qid) {
   }
 
   let designationsHtml = '<h2>Informasi Lokasi</h2><ul class="designations">';
-  Object.keys(record.designations)
+Object.keys(record.designations)
   .map(qid => [qid, DESIGNATION_TYPES[qid].order]) 
   .sort((a, b) => a[1] - b[1])
   .map(item => item[0])
   .forEach(designationQid => {
 
     let type = DESIGNATION_TYPES[designationQid];
+
     let infoTahunHtml = '';
     if (record.tahunBerdiri) {
       infoTahunHtml = `<p><b>Tahun Berdiri:</b> ${record.tahunBerdiri}</p>`;
@@ -235,17 +239,20 @@ function generateRecordDetails(qid) {
       infoTahunHtml = `<p><b>Tahun Berdiri:</b> Data belum tersedia</p>`;
     }
 
+    // Gunakan P131 dari Wikidata jika ada, jika kosong baru gunakan fallback ORGS daerah
+    let teksLokasi = record.lokasiSpesifik || ORGS[type.org];
+
     designationsHtml +=
       '<li>' +
         `<h3>${type.name}</h3>` +
         '<div class="org">' +
-          `<img src="img/org_logo_${type.org.toLowerCase()}.svg">` +
-          ORGS[type.org] +
+          `<img src="img/org_logo_${type.org.toLowerCase()}.svg">` + // Bagian gambar tetap dipertahankan
+          'Terletak di: ' + teksLokasi +  // Teks miring sekarang mengikuti properti P131 langsung
         '</div>' +
         infoTahunHtml +
       '</li>';
       
-  }); 
+  });
   
   designationsHtml += '</ul>';
 
