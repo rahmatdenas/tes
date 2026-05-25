@@ -57,13 +57,10 @@ const SPARQL_QUERY_1 =
 // 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
 // 6. SPARQL_QUERY_2: Disederhanakan HANYA untuk menarik tahun tanpa memfilter wilayah lagi
 const SPARQL_QUERY_2 =
-`SELECT ?siteQid ?tahunBerdiri WHERE {
+`SELECT ?siteQid ?waktu WHERE {
   <SPARQLVALUESCLAUSE>
   
-  OPTIONAL { 
-    ?site wdt:P571 ?waktu . 
-    BIND(YEAR(?waktu) AS ?tahunBerdiri)
-  }
+  OPTIONAL { ?site wdt:P571 ?waktu . }
   
   BIND (SUBSTR(STR(?site), 32) AS ?siteQid) .
 }`;
