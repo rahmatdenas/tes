@@ -59,8 +59,10 @@ const SPARQL_QUERY_2 =
   <SPARQLVALUESCLAUSE>
   
   ?site wdt:P131+ ?designation .
+  
+  # KOREKSI: ID Kota sekarang sudah sama persis dengan QUERY 0
   FILTER ( ?designation IN (
-    wd:Q14170, wd:Q14188, wd:Q14165, wd:Q11029
+    wd:Q7253, wd:Q7248, wd:Q7258
   ))
   
   # Memanggil P571 (Tahun Berdiri)
