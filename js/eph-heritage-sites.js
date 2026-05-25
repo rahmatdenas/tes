@@ -105,9 +105,9 @@ function populateDesignationDetailsData() {
         return;
       };
 
-      // Memotong teks format ISO dari Wikidata untuk mengambil 4 digit tahun berdiri saja
+      // Langsung simpan tahunnya karena sudah dipotong oleh SPARQL
       if (!record.tahunBerdiri && 'tahunBerdiri' in result) {
-        record.tahunBerdiri = result.tahunBerdiri.value.substring(0, 4);
+        record.tahunBerdiri = result.tahunBerdiri.value;
       }
     },
   );
