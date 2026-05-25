@@ -241,37 +241,15 @@ function generateRecordDetails(qid) {
   let titleHtml = `<h1>${record.title}</h1>`;
   let figureHtml = generateFigure(record.imageFilename);
 
-// ====================================================================
-  // KODE BARU: SKENARIO PINTAR (ANTI-GAGAL & KOSMETIK AMAN 100%)
+  // ====================================================================
+  // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
-    record.vicinityImages.forEach((imgFilename, index) => {
-      let uniqueId = `kredit-${qid}-${index}`;
-      
-      // 1. Buat kotak virtual untuk membedah kosmetik tanpa merusak aslinya
-      let bedahKosmetik = document.createElement('div');
-      bedahKosmetik.innerHTML = generateFigure(imgFilename);
-      bedahKosmetik.style.marginTop = '20px'; // Jarak ke bawah
-      
-      // 2. Cari elemen terdalam yang memegang teks "Loading" dan suntikkan KTP (ID)
-      let targetElemen = null;
-      let semuaElemen = bedahKosmetik.querySelectorAll('*');
-      semuaElemen.forEach(elemen => {
-         // Gunakan test murni ke isi teks, jadi tidak peduli ada tanda kurung atau tidak
-         if (/Loading/i.test(elemen.textContent)) {
-             targetElemen = elemen; 
-         }
-      });
-      
-      if (targetElemen) {
-         targetElemen.id = uniqueId;
-      }
-      
-      // 3. Gabungkan kosmetik utuh (yang sudah disuntik ID) ke kerangka panel
-      figureHtml += bedahKosmetik.outerHTML;
-      
-      // 4. Panggil fungsi penarik data
-      ambilKreditMandiri(imgFilename, uniqueId, qid);
+    record.vicinityImages.forEach(imgFilename => {
+      // Memanggil fungsi bawaan generateFigure() agar kosmetiknya
+      // (border, bayangan, kredit foto) otomatis sama persis.
+      // Diberi sela margin-top 20px agar jarak antar-gambar ke bawah rapi.
+      figureHtml += `<div style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
     });
   }
   // ====================================================================
@@ -457,47 +435,4 @@ class CompoundRecord extends Record {
     super(true);
     this.parts = []; 
   }
-}
-
-// ============================================================
-// FUNGSI TAMBAHAN UNTUK KREDIT FOTO MULTIPLE (PASTI JALAN)
-// ------------------------------------------------------------
-function ambilKreditMandiri(filename, elementId, qid) {
-  let url = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
-  
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      let pages = data.query.pages;
-      let page = Object.values(pages)[0];
-      let teksKredit = 'Kredit tidak diketahui';
-      
-      if (page && page.imageinfo && page.imageinfo[0].extmetadata) {
-        let meta = page.imageinfo[0].extmetadata;
-        let artist = meta.Artist ? meta.Artist.value.replace(/<[^>]*>?/gm, '').trim() : 'Unknown';
-        let license = meta.LicenseShortName ? meta.LicenseShortName.value : 'Copyright';
-        teksKredit = `${artist} [${license}]`;
-      }
-      
-      // UPDATE 1: Tembak ke memori panel (agar saat panel diklik, teks sudah siap)
-      let record = Records[qid];
-      if (record && record.panelElem) {
-         let elemenMemori = record.panelElem.querySelector(`#${elementId}`);
-         if (elemenMemori) elemenMemori.innerHTML = teksKredit;
-      }
-      
-      // UPDATE 2: Tembak ke layar utama (jika pengguna kebetulan sedang membuka panelnya)
-      let elemenLayar = document.getElementById(elementId);
-      if (elemenLayar) elemenLayar.innerHTML = teksKredit;
-      
-    })
-    .catch(err => {
-      let record = Records[qid];
-      if (record && record.panelElem) {
-         let elemenMemori = record.panelElem.querySelector(`#${elementId}`);
-         if (elemenMemori) elemenMemori.innerHTML = 'Gagal memuat';
-      }
-      let elemenLayar = document.getElementById(elementId);
-      if (elemenLayar) elemenLayar.innerHTML = 'Gagal memuat';
-    });
 }
