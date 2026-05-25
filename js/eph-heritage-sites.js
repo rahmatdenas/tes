@@ -235,14 +235,14 @@ Object.keys(record.designations)
     // 1. Format Tahun Berdiri
     let infoTahunHtml = '';
     if (record.tahunBerdiri) {
-      infoTahunHtml = `<p><b>Tahun Berdiri:</b> ${record.tahunBerdiri}</p>`;
+      infoTahunHtml = `<p>Didirikan: ${record.tahunBerdiri}</p>`;
     } else {
-      infoTahunHtml = `<p><b>Tahun Berdiri:</b> Data belum tersedia</p>`;
+      infoTahunHtml = `<p>Didirikan: Data belum tersedia</p>`;
     }
 
     // 2. Format Terletak di (Dibuat seragam dengan tag <p> dan ditebalkan)
     let teksLokasi = record.lokasiSpesifik || ORGS[type.org];
-    let infoLokasiHtml = `<p><b>Terletak di:</b> ${teksLokasi}</p>`;
+    let infoLokasiHtml = `<p><b>Terletak di</b> ${teksLokasi}</p>`;
 
     designationsHtml +=
       '<li>' +
