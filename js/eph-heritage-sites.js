@@ -97,12 +97,18 @@ function populateDesignationDetailsData() {
     function(result) {
       let record = Records[result.siteQid.value];
 
-      // KODE PELACAK: Menampilkan data mentah dari Wikidata ke layar Inspect Element Anda
-      console.log("Situs ID:", result.siteQid.value, "| Data:", result);
-
-      // Jika data waktu ada, potong 4 digit pertamanya (Tahun)
-      if (!record.tahunBerdiri && 'waktu' in result) {
+      // 1. Jika data waktu ada, potong 4 digit pertamanya (Tahun)
+      if ('waktu' in result && result.waktu.value) {
         record.tahunBerdiri = result.waktu.value.substring(0, 4);
+        
+        // 2. DOBRAK CACHE: Hapus cetakan HTML lama yang telanjur mencatat "Data belum tersedia"
+        record.panelElem = undefined; 
+        
+        // 3. REFRESH INSTAN: Jika situs ini yang sedang dibuka di layar, paksa gambar ulang panelnya sekarang juga!
+        let currentActiveQid = window.location.hash.replace('#', '');
+        if (currentActiveQid === result.siteQid.value) {
+          displayRecordDetails(result.siteQid.value);
+        }
       }
     },
   );
