@@ -16,14 +16,14 @@ const ORGS = {
 // Ini yang akan dibaca oleh Dropdown template Anda
 const DESIGNATION_TYPES = {
   Q7253 : { org: 'PDG', name: 'Kota Padang'      , order: 1 },
-  Q7248 : { org: 'BKT', name: 'Kota Bukittingg'    , order: 2 },
-  Q7258 : { org: 'PRM', name: 'Kota Pariaman' , order: 3 },
+  Q7248 : { org: 'BKT', name: 'Kota Bukittinggi' , order: 2 },
+  Q7258 : { org: 'PRM', name: 'Kota Pariaman'    , order: 3 },
   // Tambahkan ID Kab/Kota lain di sini dan pastikan urutannya (order) diteruskan
 }
 
-// 4. SPARQL_QUERY_0: Mengambil data dan "menipu" variabel designation
+// 4. SPARQL_QUERY_0: Mengambil data lokasi dan LANGSUNG menarik Tahun Berdiri
 const SPARQL_QUERY_0 =
-`SELECT ?siteQid ?siteLabel ?designationQid WHERE {
+`SELECT ?siteQid ?siteLabel ?designationQid ?tahunBerdiriMentah WHERE {
   {
     ?site wdt:P31 wd:Q32815 . 
     ?site wdt:P131+ ?designation .
@@ -31,9 +31,13 @@ const SPARQL_QUERY_0 =
   }
   ?site rdfs:label ?siteLabel . FILTER(LANG(?siteLabel) = "id") .
   
+  # Menarik tahun berdiri mentah dari Wikidata di langkah pertama
+  OPTIONAL { ?site wdt:P571 ?tahunBerdiriMentah . }
+  
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
 } ORDER BY ?siteLabel`;
+
 // 5. SPARQL_QUERY_1: Tetap sama (Hanya mengambil koordinat P625)
 const SPARQL_QUERY_1 =
 `SELECT ?siteQid ?coord WHERE {
@@ -44,19 +48,9 @@ const SPARQL_QUERY_1 =
   BIND (SUBSTR(STR(?site), 32) AS ?siteQid) .
 }`;
 
-// 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
-// 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
-// 6. SPARQL_QUERY_2: Disederhanakan HANYA untuk menarik tahun tanpa memfilter wilayah lagi
+// (CATATAN: SPARQL_QUERY_2 SUDAH KITA HAPUS SEPENUHNYA AGAR SERVER TIDAK DOWN)
 
-// 7. SPARQL_QUERY_3: Tetap sama (Mengambil gambar dan link Wikipedia)
-const SPARQL_QUERY_2 =
-`SELECT ?siteQid ?waktu WHERE {
-  <SPARQLVALUESCLAUSE>
-  
-  ?site wdt:P571 ?waktu .
-  
-  BIND (SUBSTR(STR(?site), 32) AS ?siteQid) .
-}`;
+// 6. SPARQL_QUERY_3: Tetap sama (Mengambil gambar dan link Wikipedia)
 const SPARQL_QUERY_3 =
 `SELECT ?siteQid ?image ?wikipediaUrlTitle WHERE {
   <SPARQLVALUESCLAUSE>
@@ -69,7 +63,7 @@ const SPARQL_QUERY_3 =
   BIND (SUBSTR(STR(?wikipediaUrl), 31) AS ?wikipediaUrlTitle) .
 }`;
 
-// 8. ABOUT_SPARQL_QUERY: Disesuaikan menggunakan logika wilayah, bukan tipe cagar
+// 7. ABOUT_SPARQL_QUERY: Disesuaikan menggunakan logika wilayah
 const ABOUT_SPARQL_QUERY =
 `SELECT ?site ?siteLabel ?designationLabel ?coord ?image ?wikipedia WHERE {
   {
@@ -94,3 +88,4 @@ const ABOUT_SPARQL_QUERY =
 
 // Globals
 var DesignationIndex;
+var Records = {}; // Memastikan Records dideklarasikan jika template membutuhkannya
