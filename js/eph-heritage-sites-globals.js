@@ -23,7 +23,7 @@ const DESIGNATION_TYPES = {
 
 // 4. SPARQL_QUERY_0: Mengambil data dan "menipu" variabel designation
 const SPARQL_QUERY_0 =
-`SELECT ?siteQid ?siteLabel ?designationQid ?waktu WHERE {
+`SELECT ?siteQid ?siteLabel ?designationQid ?tahunBerdiriMentah WHERE {
   {
     ?site wdt:P31 wd:Q32815 . 
     ?site wdt:P131+ ?designation .
@@ -31,8 +31,7 @@ const SPARQL_QUERY_0 =
   }
   ?site rdfs:label ?siteLabel . FILTER(LANG(?siteLabel) = "id") .
   
-  # KITA TARIK TAHUNNYA LANGSUNG DI SINI!
-  OPTIONAL { ?site wdt:P571 ?waktu . }
+  OPTIONAL { ?site wdt:P571 ?tahunBerdiriMentah . }
   
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
