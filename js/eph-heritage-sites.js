@@ -242,20 +242,36 @@ function generateRecordDetails(qid) {
   let figureHtml = generateFigure(record.imageFilename);
 
 // ====================================================================
-  // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
+  // KODE BARU: SKENARIO PINTAR (ANTI-GAGAL & KOSMETIK AMAN 100%)
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
     record.vicinityImages.forEach((imgFilename, index) => {
+      let uniqueId = `kredit-${qid}-${index}`;
       
-      let uniqueId = `bungkus-kredit-${qid}-${index}`;
-      let htmlBawaan = generateFigure(imgFilename);
+      // 1. Buat kotak virtual untuk membedah kosmetik tanpa merusak aslinya
+      let bedahKosmetik = document.createElement('div');
+      bedahKosmetik.innerHTML = generateFigure(imgFilename);
+      bedahKosmetik.style.marginTop = '20px'; // Jarak ke bawah
       
-      // Kita BUNGKUS kosmetik asli Anda di dalam div milik kita
-      figureHtml += `<div id="${uniqueId}" style="margin-top: 20px;">${htmlBawaan}</div>`;
+      // 2. Cari elemen terdalam yang memegang teks "Loading" dan suntikkan KTP (ID)
+      let targetElemen = null;
+      let semuaElemen = bedahKosmetik.querySelectorAll('*');
+      semuaElemen.forEach(elemen => {
+         // Gunakan test murni ke isi teks, jadi tidak peduli ada tanda kurung atau tidak
+         if (/Loading/i.test(elemen.textContent)) {
+             targetElemen = elemen; 
+         }
+      });
       
-      // Panggil fungsi penarik data
+      if (targetElemen) {
+         targetElemen.id = uniqueId;
+      }
+      
+      // 3. Gabungkan kosmetik utuh (yang sudah disuntik ID) ke kerangka panel
+      figureHtml += bedahKosmetik.outerHTML;
+      
+      // 4. Panggil fungsi penarik data
       ambilKreditMandiri(imgFilename, uniqueId, qid);
-      
     });
   }
   // ====================================================================
@@ -444,7 +460,7 @@ class CompoundRecord extends Record {
 }
 
 // ============================================================
-// FUNGSI TAMBAHAN UNTUK KREDIT FOTO MULTIPLE (ANTI-GAGAL)
+// FUNGSI TAMBAHAN UNTUK KREDIT FOTO MULTIPLE (PASTI JALAN)
 // ------------------------------------------------------------
 function ambilKreditMandiri(filename, elementId, qid) {
   let url = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
@@ -463,22 +479,25 @@ function ambilKreditMandiri(filename, elementId, qid) {
         teksKredit = `${artist} [${license}]`;
       }
       
-      // METODE ANTI-GAGAL: Scanner akan mencari elemen berulang kali selama 5 detik
-      let pencarian = setInterval(() => {
-         // 1. Cari kotak bungkusnya (baik di layar maupun di memori)
-         let bungkus = document.getElementById(elementId);
-         if (!bungkus && Records[qid] && Records[qid].panelElem) {
-            bungkus = Records[qid].panelElem.querySelector(`#${elementId}`);
-         }
-
-         // 2. Jika bungkusnya ketemu, ganti teks loading secara paksa di dalamnya
-         if (bungkus && bungkus.innerHTML.includes('Loading...')) {
-            bungkus.innerHTML = bungkus.innerHTML.replace(/\(Loading\.\.\.\)/i, teksKredit);
-            clearInterval(pencarian); // Tugas selesai, matikan scanner
-         }
-      }, 200);
-
-      // Matikan scanner otomatis setelah 5 detik agar memori browser tetap ringan
-      setTimeout(() => clearInterval(pencarian), 5000);
+      // UPDATE 1: Tembak ke memori panel (agar saat panel diklik, teks sudah siap)
+      let record = Records[qid];
+      if (record && record.panelElem) {
+         let elemenMemori = record.panelElem.querySelector(`#${elementId}`);
+         if (elemenMemori) elemenMemori.innerHTML = teksKredit;
+      }
+      
+      // UPDATE 2: Tembak ke layar utama (jika pengguna kebetulan sedang membuka panelnya)
+      let elemenLayar = document.getElementById(elementId);
+      if (elemenLayar) elemenLayar.innerHTML = teksKredit;
+      
+    })
+    .catch(err => {
+      let record = Records[qid];
+      if (record && record.panelElem) {
+         let elemenMemori = record.panelElem.querySelector(`#${elementId}`);
+         if (elemenMemori) elemenMemori.innerHTML = 'Gagal memuat';
+      }
+      let elemenLayar = document.getElementById(elementId);
+      if (elemenLayar) elemenLayar.innerHTML = 'Gagal memuat';
     });
 }
