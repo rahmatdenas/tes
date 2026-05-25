@@ -54,24 +54,25 @@ const SPARQL_QUERY_1 =
 }`;
 
 // 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
+// 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
 const SPARQL_QUERY_2 =
 `SELECT ?siteQid ?designationQid ?tahunBerdiri WHERE {
   <SPARQLVALUESCLAUSE>
   
   ?site wdt:P131+ ?designation .
-  
-  # KOREKSI: ID Kota sekarang sudah sama persis dengan QUERY 0
   FILTER ( ?designation IN (
     wd:Q7253, wd:Q7248, wd:Q7258
   ))
   
-  # Memanggil P571 (Tahun Berdiri)
-  OPTIONAL { ?site wdt:P571 ?tahunBerdiri . }
+  # Biarkan SPARQL yang memotong dan mengambil Tahunnya menggunakan fungsi YEAR()
+  OPTIONAL { 
+    ?site wdt:P571 ?waktu . 
+    BIND(YEAR(?waktu) AS ?tahunBerdiri)
+  }
   
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
 }`;
-
 // 7. SPARQL_QUERY_3: Tetap sama (Mengambil gambar dan link Wikipedia)
 const SPARQL_QUERY_3 =
 `SELECT ?siteQid ?image ?wikipediaUrlTitle WHERE {
