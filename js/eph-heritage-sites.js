@@ -36,17 +36,15 @@ function populateDesignationTypesData() {
   return queryWdqsThenProcess(
     SPARQL_QUERY_0,
     function(result) {
-
       let qid = result.siteQid.value;
       if (!(qid in Records)) {
-        Records[qid] = new Record(false);  // Assume SimpleRecord for now
+        Records[qid] = new Record(false);
       }
       let record = Records[qid];
 
       if ('siteLabel' in result && result.siteLabel.value) {
         record.title = result.siteLabel.value;
-      }
-      else {
+      } else {
         record.title = '[ERROR: No title]';
       }
 
@@ -57,15 +55,15 @@ function populateDesignationTypesData() {
       if (!(designationQid in record.designations)) {
         record.designations[designationQid] = new Designation();
       }
+
+      // TANGKAP TAHUN BERDIRI DI SINI SEBELUM UI DIGAMBAR!
+      if (!record.tahunBerdiri && 'waktu' in result) {
+        record.tahunBerdiri = result.waktu.value.substring(0, 4);
+      }
     },
     function() {
-
       populateDesignationIndex();
-
-      // Generate SPARQL VALUES clause for subsequent queries
       SparqlValuesClause = 'VALUES ?site {' + Object.keys(Records).map(qid => `wd:${qid}`).join(' ') + '}';
-
-      // Generate index title for the index list and window title
       Object.values(Records).forEach(record => { record.indexTitle = record.title });
     },
   );
@@ -92,28 +90,9 @@ function populateCoordinatesData() {
 
 // Queries WDQS and sets the subfields of the "designations" Records field.
 function populateDesignationDetailsData() {
-  return queryWdqsThenProcess(
-    SPARQL_QUERY_2,
-    function(result) {
-      let record = Records[result.siteQid.value];
-
-      // 1. Jika data waktu ada, potong 4 digit pertamanya (Tahun)
-      if ('waktu' in result && result.waktu.value) {
-        record.tahunBerdiri = result.waktu.value.substring(0, 4);
-        
-        // 2. DOBRAK CACHE: Hapus cetakan HTML lama yang telanjur mencatat "Data belum tersedia"
-        record.panelElem = undefined; 
-        
-        // 3. REFRESH INSTAN: Jika situs ini yang sedang dibuka di layar, paksa gambar ulang panelnya sekarang juga!
-        let currentActiveQid = window.location.hash.replace('#', '');
-        if (currentActiveQid === result.siteQid.value) {
-          displayRecordDetails(result.siteQid.value);
-        }
-      }
-    },
-  );
+  // Langsung selesaikan proses tanpa perlu bertanya ke Wikidata lagi
+  return Promise.resolve();
 }
-
 
 // Queries WDQS and sets the "imageFilename" and "articleTitle" Records fields.
 function populateImageAndWikipediaData() {
