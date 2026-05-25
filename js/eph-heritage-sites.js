@@ -96,23 +96,29 @@ function populateImageAndWikipediaData() {
         record.articleTitle = decodeURIComponent(result.wikipediaUrlTitle.value);
       }
 
-      // ====================================================================
-      // KODE BARU: SKENARIO PINTAR UNTUK GAMBAR LINGKUNGAN SEKITAR
-      // ====================================================================
+    // ====================================================================
+  // KODE BARU: SKENARIO PINTAR (MEMPERTAHANKAN KOSMETIK ASLI)
+  // ====================================================================
+  if (record.vicinityImages && record.vicinityImages.length > 0) {
+    record.vicinityImages.forEach((imgFilename, index) => {
       
-      // Inisialisasi array daftar gambar tambahan jika belum ada
-      if (!record.vicinityImages) {
-        record.vicinityImages = [];
-      }
-
-      // Masukkan gambar lingkungan sekitar ke dalam daftar (pastikan tidak duplikat)
-      if ('vicinityImage' in result) {
-        let fotoTambahan = extractImageFilename(result.vicinityImage);
-        if (!record.vicinityImages.includes(fotoTambahan)) {
-          record.vicinityImages.push(fotoTambahan);
-        }
-      }
-      // ====================================================================
+      let uniqueId = `kredit-${qid}-${index}`;
+      
+      // 1. Panggil fungsi bawaan agar kosmetik (border, font) 100% sempurna
+      let htmlBawaan = generateFigure(imgFilename);
+      
+      // 2. "Pancing" teks (Loading...) dan suntikkan ID unik tanpa merusak HTML aslinya
+      let htmlDimodifikasi = htmlBawaan.replace('(Loading...)', `<span id="${uniqueId}">(Loading...)</span>`);
+      
+      // 3. Masukkan ke tata letak dengan jarak atas (menghapus clear: right agar rapi)
+      figureHtml += `<div style="margin-top: 15px;">${htmlDimodifikasi}</div>`;
+      
+      // 4. Jalankan penarik kredit mandiri untuk mengganti teks di ID unik tersebut
+      setTimeout(() => { ambilKreditMandiri(imgFilename, uniqueId); }, 500);
+      
+    });
+  }
+  // ====================================================================
     },
   );
 }
