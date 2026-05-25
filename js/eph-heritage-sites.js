@@ -8,7 +8,6 @@ function loadPrimaryData() {
     .then(populateMapAndIndex)
     .then(() => {
       return Promise.all([
-        populateDesignationDetailsData(),
         populateImageAndWikipediaData(),
       ]);
     })
@@ -96,31 +95,23 @@ function populateDesignationDetailsData() {
   return queryWdqsThenProcess(
     SPARQL_QUERY_2,
     function(result) {
-
       let record = Records[result.siteQid.value];
       let designationQid = result.designationQid.value;
+      
       if ('partOf' in DESIGNATION_TYPES[designationQid]) {
         designationQid = DESIGNATION_TYPES[designationQid].partOf;
       }
       if (!(designationQid in record.designations)) {
-        console.log(`ERROR: Unrecognized designation:${designationQid} for ${result.siteQid.value}`);
         return;
       };
 
-      let designation = record.designations[designationQid];
-      if (!designation.date && 'declared' in result) {
-        designation.date = parseDate(result, 'declared');
-      }
-      if (!designation.declarationData && 'declaration' in result) {
-        designation.declarationData = result.declaration.value;
-        designation.declarationTitle = result.declarationTitle.value;
-        if ('declarationScan' in result) designation.declarationScan = result.declarationScan.value.replace(/Special:FilePath\//, 'File:');
-        if ('declarationText' in result) designation.declarationText = result.declarationText.value;
+      // Memotong teks format ISO dari Wikidata untuk mengambil 4 digit tahun berdiri saja
+      if (!record.tahunBerdiri && 'tahunBerdiri' in result) {
+        record.tahunBerdiri = result.tahunBerdiri.value.substring(0, 4);
       }
     },
   );
 }
-
 
 
 // Queries WDQS and sets the "imageFilename" and "articleTitle" Records fields.
@@ -328,37 +319,11 @@ function generateRecordDetails(qid) {
     let type = DESIGNATION_TYPES[designationQid];
     let designation = record.designations[designationQid];
 
-    let declarationHtml = '';
-    if (designation.declarationData) {
-      declarationHtml =
-        `<p>Declaration – <i>${designation.declarationTitle}</i>` +
-        (designation.date ? '; approved ' + designation.date : '') +
-        '</p>' +
-        '<div class="wikilinks">' +
-          '<p>' +
-            `<a href="${designation.declarationData}" title="">` +
-              '<img src="img/wikidata_tiny_logo.png" alt="">' +
-              '<span>View details in Wikidata</span>' +
-            '</a>' +
-          '</p>';
-      if (designation.declarationText) declarationHtml +=
-        '<p>' +
-          `<a href="${designation.declarationText}" title="">` +
-            '<img src="img/wikisource_tiny_logo.png" alt="">' +
-            '<span>Read declaration text on Wikisource</span>' +
-          '</a>' +
-        '</p>';
-      if (designation.declarationScan) declarationHtml +=
-        '<p>' +
-          `<a href="${designation.declarationScan}" title="">` +
-            '<img src="img/wikicommons_tiny_logo.png" alt="">' +
-            '<span>View scanned declaration in Wikimedia Commons</span>' +
-          '</a>' +
-        '</p>';
-      declarationHtml += '</div>';
-    }
-    else {
-      if (designation.date) declarationHtml = `<p>Declared – ${designation.date}</p>`;
+let infoTahunHtml = '';
+    if (record.tahunBerdiri) {
+      infoTahunHtml = `<p><b>Tahun Berdiri:</b> ${record.tahunBerdiri}</p>`;
+    } else {
+      infoTahunHtml = `<p><b>Tahun Berdiri:</b> Data belum tersedia</p>`;
     }
 
     designationsHtml +=
@@ -368,9 +333,11 @@ function generateRecordDetails(qid) {
           `<img src="img/org_logo_${type.org.toLowerCase()}.svg">` +
           ORGS[type.org] +
         '</div>' +
-        declarationHtml +
+        infoTahunHtml +
       '</li>';
-  });
+      
+  }); // <-- Ini penutup dari Object.keys(record.designations).forEach(...)
+  
   designationsHtml += '</ul>';
 
   let panelElem = document.createElement('div');
@@ -512,6 +479,7 @@ class Record {
     this.designations  = {};
     this.panelElem     = undefined;
     this.indexLi       = undefined;
+    this.tahunBerdiri  = undefined; // <-- TAMBAHKAN BARIS INI
   }
 }
 
