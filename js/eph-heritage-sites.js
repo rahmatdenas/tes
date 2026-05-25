@@ -8,6 +8,7 @@ function loadPrimaryData() {
     .then(populateMapAndIndex)
     .then(() => {
       return Promise.all([
+        populateDesignationDetailsData(), // <-- KEMBALIKAN BARIS INI
         populateImageAndWikipediaData(),
       ]);
     })
