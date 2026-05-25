@@ -1,38 +1,26 @@
 'use strict';
 
-
 function loadPrimaryData() {
   doPreProcessing();
   populateDesignationTypesData()
     .then(populateCoordinatesData)
     .then(populateMapAndIndex)
     .then(() => {
+      // HANYA MENGAMBIL GAMBAR DAN WIKIPEDIA, QUERY_2 SUDAH DIHAPUS
       return Promise.all([
-        populateDesignationDetailsData(), // <-- KEMBALIKAN BARIS INI
         populateImageAndWikipediaData(),
       ]);
     })
     .then(enableApp);
 }
 
-
 // Performs pre data post-processing: mainly initialize static content
 function doPreProcessing() {
-
-  // Set the about page WDQS link
   let anchorElem = document.getElementById('wdqs-link');
   anchorElem.href = 'https://query.wikidata.org/#' + encodeURIComponent(ABOUT_SPARQL_QUERY);
-
-  // Update panel in case of static content
   processHashChange();
 }
 
-
-// Queries WDQS for the heritage site Wikidata items for national PH heritage
-// designations or international designations of PH sites, then generates a
-// Record object if needed and sets the "title", skeleton "designations", and
-// "indexTitle" Records fields and the SparqlValuesClause value. Also calls
-// populateDesignationIndex().
 function populateDesignationTypesData() {
   return queryWdqsThenProcess(
     SPARQL_QUERY_0,
@@ -56,6 +44,13 @@ function populateDesignationTypesData() {
       if (!(designationQid in record.designations)) {
         record.designations[designationQid] = new Designation();
       }
+      
+      // ==========================================
+      // PENANGKAP TAHUN BERDIRI (DARI QUERY 0)
+      // ==========================================
+      if (!record.tahunBerdiri && result.tahunBerdiriMentah && result.tahunBerdiriMentah.value) {
+        record.tahunBerdiri = result.tahunBerdiriMentah.value.substring(0, 4);
+      }
     },
     function() {
       populateDesignationIndex();
@@ -65,14 +60,12 @@ function populateDesignationTypesData() {
   );
 }
 
-// Queries WDQS, sets the "lat" and "lon" Records fields, and sets the
-// BootstrapDataIsLoaded status.
 function populateCoordinatesData() {
   return queryWdqsThenProcess(
     SPARQL_QUERY_1,
     function(result) {
       let record = Records[result.siteQid.value];
-      let wktBits = result.coord.value.split(/\(|\)| /);  // Note: format is Point WKT
+      let wktBits = result.coord.value.split(/\(|\)| /);
       record.lat = parseFloat(wktBits[2]);
       record.lon = parseFloat(wktBits[1]);
     },
@@ -82,30 +75,8 @@ function populateCoordinatesData() {
   );
 }
 
+// FUNGSI populateDesignationDetailsData() SUDAH DIHAPUS SEPENUHNYA
 
-// Queries WDQS and sets the subfields of the "designations" Records field.
-function populateDesignationDetailsData() {
-  return queryWdqsThenProcess(
-    SPARQL_QUERY_2,
-    function(result) {
-      let record = Records[result.siteQid.value];
-
-      // Jika data waktu didapat dari Wikidata, langsung potong 4 digit tahunnya
-      if (!record.tahunBerdiri && 'waktu' in result) {
-        record.tahunBerdiri = result.waktu.value.substring(0, 4);
-        
-        // Jurus Dobrak Cache: Hapus panel lama dan buat ulang jika sedang diklik
-        record.panelElem = undefined; 
-        let currentActiveQid = window.location.hash.replace('#', '');
-        if (currentActiveQid === result.siteQid.value) {
-          displayRecordDetails(result.siteQid.value);
-        }
-      }
-    },
-  );
-}
-
-// Queries WDQS and sets the "imageFilename" and "articleTitle" Records fields.
 function populateImageAndWikipediaData() {
   return queryWdqsThenProcess(
     SPARQL_QUERY_3,
@@ -117,15 +88,8 @@ function populateImageAndWikipediaData() {
   );
 }
 
-
-// Populates the designation index with the total number of sites for each
-// designation type, each organization, and for all sites as a whole.
 function populateDesignationIndex() {
-
-  // Declare index with 1 entry corresponding to the 'all' type
   DesignationIndex = { all: new DesignationIndexEntry };
-
-  // Create index entries
   Object.keys(DESIGNATION_TYPES)
     .filter(qid => !('partOf' in DESIGNATION_TYPES[qid]))
     .forEach(qid => {
@@ -134,7 +98,6 @@ function populateDesignationIndex() {
       if (!(orgId in DesignationIndex)) DesignationIndex[orgId] = new DesignationIndexEntry;
     });
 
-  // Populate index entries with totals
   Object.values(Records).forEach(record => {
     DesignationIndex.all.total++;
     Object.keys(record.designations).forEach(typeQid => {
@@ -145,23 +108,11 @@ function populateDesignationIndex() {
   });
 }
 
-
-// Populates the map with map markers and the index list with items and sets the
-// "mapMarker" and "popup" Records fields (for sites with coordinates), and
-// "indexLi" Records field (for all sites). This also calls
-// populateDesignationIndexNodes() and generateFilterSelect().
-// This should be called as soon as the bootstrap data have been loaded.
 function populateMapAndIndex() {
-
-  // Populate map and list index
   let listIndex = document.getElementById('index-list');
   let mapMarkers = [];
   Object.entries(Records).forEach(entry => {
-
     let qid = entry[0], record = entry[1];
-
-    // Generate map marker with popup
-    // NOTE: Assume that compound sites do not have coordinates
     if (!record.isCompound && record.lat && record.lon) {
       let mapMarker = L.marker(
         [record.lat, record.lon],
@@ -174,28 +125,18 @@ function populateMapAndIndex() {
       record.popup = popup;
       mapMarkers.push(mapMarker);
     }
-
-    // Generate index list item
     let li = document.createElement('li');
     li.innerHTML = `<a href="#${qid}">${record.indexTitle}</a>`;
     record.indexLi = li;
     listIndex.appendChild(li);
   });
   Cluster.addLayers(mapMarkers);
-
   populateDesignationIndexNodes();
   generateFilterSelect();
-
   processHashChange();
 }
 
-
-// Completely populates the designation index with the map markers and
-// sorted index list items corresponding to each designation type, organization,
-// and for all sites as a whole.
 function populateDesignationIndexNodes() {
-
-  // Populate index entries with lists of map markers and list items
   Object.values(Records).forEach(record => {
     if (record.mapMarker) DesignationIndex.all.mapMarkers.push(record.mapMarker);
     DesignationIndex.all.indexLis  .push(record.indexLi);
@@ -209,8 +150,6 @@ function populateDesignationIndexNodes() {
       DesignationIndex[orgId  ].indexLis.push(record.indexLi);
     });
   });
-
-  // Sort list items (using Schwartzian transform)
   Object.values(DesignationIndex).forEach(indexItem => {
     indexItem.indexLis = indexItem.indexLis
       .map(li => [li, li.textContent])
@@ -219,19 +158,13 @@ function populateDesignationIndexNodes() {
   });
 }
 
-
-// Generates the list index filter select element based on the completed
-// designation index and sets the element's change event handler.
 function generateFilterSelect() {
-
   let select = document.querySelector('#filter select');
-
-  // Populate the select element (using the specified sort order in DESIGNATION_TYPES)
   select.options[0].textContent += DesignationIndex.all.total;
   let optgroup;
   Object.keys(DESIGNATION_TYPES)
     .filter(qid => !('partOf' in DESIGNATION_TYPES[qid]))
-    .map(qid => [qid, DESIGNATION_TYPES[qid].order])  // Schwartzian transform
+    .map(qid => [qid, DESIGNATION_TYPES[qid].order]) 
     .sort((a, b) => a[1] - b[1])
     .map(item => item[0])
     .forEach(qid => {
@@ -246,8 +179,6 @@ function generateFilterSelect() {
       option.textContent = `${type.name} – ${DesignationIndex[qid].total}`;
       optgroup.appendChild(option);
     });
-
-  // Add event handler to activate the filtering
   select.addEventListener('change', function() {
     let qid = select.options[select.selectedIndex].value;
     Cluster.clearLayers();
@@ -260,15 +191,10 @@ function generateFilterSelect() {
   });
 }
 
-
-// Given a heritage site QID, updates the map to show the corresponding
-// map marker, opens its popup if it isn't open yet, and displays the heritage
-// site's details on the side panel.
 function activateSite(qid) {
   displayRecordDetails(qid);
   let record = Records[qid];
   if (record.isCompound) {
-    // TODO: Enhance to show all sites
   }
   else if (record.mapMarker) {
     Cluster.zoomToShowLayer(
@@ -281,15 +207,9 @@ function activateSite(qid) {
   }
 }
 
-
-// Generates the details content of a heritage site for the side panel. Also
-// calls queryOsm() for the heritage site.
 function generateRecordDetails(qid) {
-
   let record = Records[qid];
-
   let titleHtml = `<h1>${record.title}</h1>`;
-
   let figureHtml = generateFigure(record.imageFilename);
 
   let articleHtml;
@@ -297,20 +217,18 @@ function generateRecordDetails(qid) {
     articleHtml = '<div class="article main-text loading"><div class="loader"></div></div>';
   }
   else {
-    articleHtml = '<div class="article main-text nodata"><p>This heritage site has no Wikipedia article yet.</p></div>';
+    articleHtml = '<div class="article main-text nodata"><p>Situs ini belum memiliki artikel Wikipedia berbahasa Indonesia.</p></div>';
   }
 
-  let designationsHtml = '<h2>Designations</h2><ul class="designations">';
+  let designationsHtml = '<h2>Informasi Lokasi</h2><ul class="designations">';
   Object.keys(record.designations)
-  .map(qid => [qid, DESIGNATION_TYPES[qid].order])  // Schwartzian transform
+  .map(qid => [qid, DESIGNATION_TYPES[qid].order]) 
   .sort((a, b) => a[1] - b[1])
   .map(item => item[0])
   .forEach(designationQid => {
 
     let type = DESIGNATION_TYPES[designationQid];
-    let designation = record.designations[designationQid];
-
-let infoTahunHtml = '';
+    let infoTahunHtml = '';
     if (record.tahunBerdiri) {
       infoTahunHtml = `<p><b>Tahun Berdiri:</b> ${record.tahunBerdiri}</p>`;
     } else {
@@ -327,30 +245,24 @@ let infoTahunHtml = '';
         infoTahunHtml +
       '</li>';
       
-  }); // <-- Ini penutup dari Object.keys(record.designations).forEach(...)
+  }); 
   
   designationsHtml += '</ul>';
 
   let panelElem = document.createElement('div');
   panelElem.innerHTML =
-    `<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/${qid}" title="View in Wikidata">` +
-    '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
+    `<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/${qid}" title="Lihat di Wikidata">` +
+    '<img src="img/wikidata_tiny_logo.png" alt="[Lihat item Wikidata]" /></a>' +
     titleHtml +
     figureHtml +
     articleHtml +
     designationsHtml;
   record.panelElem = panelElem;
 
-  // Lazy load Wikipedia article extract
   if (record.articleTitle) displayArticleExtract(record.articleTitle, panelElem.querySelector('.article'));
-
-  // Lazy load OSM polygon
   queryOsm(qid);
 }
 
-
-// Given an English Wikipedia article title and a div element, retrieves an
-// extract of the article via the Wikipedia API and places it into the element.
 function displayArticleExtract(title, elem) {
   loadJsonp(
     'https://id.wikipedia.org/w/api.php',
@@ -368,7 +280,7 @@ function displayArticleExtract(title, elem) {
         '<p class="wikipedia-link">' +
           `<a href="https://id.wikipedia.org/wiki/${encodeURIComponent(title)}">` +
             '<img src="img/wikipedia_tiny_logo.png" alt="" />' +
-            '<span>Read more on Wikipedia</span>' +
+            '<span>Baca selengkapnya di Wikipedia</span>' +
           '</a>' +
         '</p>';
       elem.classList.remove('loading');
@@ -376,17 +288,11 @@ function displayArticleExtract(title, elem) {
   );
 }
 
-
-// Given a heritage site QID, queries Overpass API to retrieve any OSM ways or
-// relations matching the wikidata=QID tag as JSON. If there are, converts the
-// JSON into GeoJSON and adds it to the map and sets the "shapeLayer" Records
-// field.
 function queryOsm(qid) {
   let xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== xhr.DONE) return;
     if (xhr.status === 200) {
-
       let geoJson = osmtogeojson(JSON.parse(xhr.responseText));
       if (!geoJson || geoJson.features.length === 0) return;
       let shapeLayer = L.geoJSON(
@@ -429,12 +335,10 @@ out skel qt;`
   xhr.send();
 }
 
-
 // ============================================================
 // CLASSES
 // ------------------------------------------------------------
 
-// Class declaration for representing a site's heritage designation
 class Designation {
   constructor() {
     this.date             = undefined;
@@ -443,14 +347,9 @@ class Designation {
     this.declarationScan  = undefined;
     this.declarationText  = undefined;
     this.partOfQid        = null;
-    // TODO: Add links to external info about the designation
-    // such as the official WHS page
   }
 }
 
-
-// Class declaration representing an entry in the designation index and used to
-// enable the filtering by designation types in the index list
 class DesignationIndexEntry {
   constructor() {
     this.total      = 0;
@@ -459,8 +358,6 @@ class DesignationIndexEntry {
   }
 }
 
-
-// Class declaration for representing a heritage site
 class Record {
   constructor(isCompound) {
     this.isCompound    = isCompound;
@@ -470,13 +367,10 @@ class Record {
     this.designations  = {};
     this.panelElem     = undefined;
     this.indexLi       = undefined;
-    this.tahunBerdiri  = undefined; // <-- TAMBAHKAN BARIS INI
+    this.tahunBerdiri  = undefined;
   }
 }
 
-
-// Subclass declaration for representing an individual heritage site
-// (mainly with location data such as coordinates)
 class SimpleRecord extends Record {
   constructor() {
     super(false);
@@ -488,12 +382,9 @@ class SimpleRecord extends Record {
   }
 }
 
-
-// Subclass declaration for representing a compound heritage site
-// (mainly a set of simple sites, so does not have any location in itself)
 class CompoundRecord extends Record {
   constructor() {
     super(true);
-    this.parts = [];  // TODO: This should be properly populated
+    this.parts = []; 
   }
 }
