@@ -97,9 +97,12 @@ function populateDesignationDetailsData() {
     function(result) {
       let record = Records[result.siteQid.value];
 
-      // Abaikan ID Kota, langsung tembak data tahunnya ke Record Situs!
-      if (!record.tahunBerdiri && 'tahunBerdiri' in result) {
-        record.tahunBerdiri = result.tahunBerdiri.value;
+      // KODE PELACAK: Menampilkan data mentah dari Wikidata ke layar Inspect Element Anda
+      console.log("Situs ID:", result.siteQid.value, "| Data:", result);
+
+      // Jika data waktu ada, potong 4 digit pertamanya (Tahun)
+      if (!record.tahunBerdiri && 'waktu' in result) {
+        record.tahunBerdiri = result.waktu.value.substring(0, 4);
       }
     },
   );
