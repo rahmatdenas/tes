@@ -23,26 +23,20 @@ const DESIGNATION_TYPES = {
 
 // 4. SPARQL_QUERY_0: Mengambil data dan "menipu" variabel designation
 const SPARQL_QUERY_0 =
-`SELECT ?siteQid ?siteLabel ?designationQid WHERE {
+`SELECT ?siteQid ?siteLabel ?designationQid ?waktu WHERE {
   {
-    # Ganti wd:Q32 dengan ID Cagar Budaya/Situs jika bukan mencari Masjid
     ?site wdt:P31 wd:Q32815 . 
-    
-    # Gunakan P131+ (rekursif) agar otomatis melacak dari Nagari -> Kec -> Kab/Kota
     ?site wdt:P131+ ?designation .
-    
-    # Masukkan QID Kab/Kota yang sama dengan yang ada di DESIGNATION_TYPES
-    FILTER ( ?designation IN (
-      wd:Q7253, wd:Q7248, wd:Q7258
-    ))
+    FILTER ( ?designation IN ( wd:Q7253, wd:Q7248, wd:Q7258 ))
   }
   ?site rdfs:label ?siteLabel . FILTER(LANG(?siteLabel) = "id") .
   
+  # KITA TARIK TAHUNNYA LANGSUNG DI SINI!
+  OPTIONAL { ?site wdt:P571 ?waktu . }
+  
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
-  # Sistem JavaScript sekarang mengira Kab/Kota adalah Designation!
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
 } ORDER BY ?siteLabel`;
-
 // 5. SPARQL_QUERY_1: Tetap sama (Hanya mengambil koordinat P625)
 const SPARQL_QUERY_1 =
 `SELECT ?siteQid ?coord WHERE {
@@ -56,14 +50,7 @@ const SPARQL_QUERY_1 =
 // 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
 // 6. SPARQL_QUERY_2: Diubah agar tidak mencari P31, tapi mencari P131 (Lokasi)
 // 6. SPARQL_QUERY_2: Disederhanakan HANYA untuk menarik tahun tanpa memfilter wilayah lagi
-const SPARQL_QUERY_2 =
-`SELECT ?siteQid ?waktu WHERE {
-  <SPARQLVALUESCLAUSE>
-  
-  OPTIONAL { ?site wdt:P571 ?waktu . }
-  
-  BIND (SUBSTR(STR(?site), 32) AS ?siteQid) .
-}`;
+
 // 7. SPARQL_QUERY_3: Tetap sama (Mengambil gambar dan link Wikipedia)
 const SPARQL_QUERY_3 =
 `SELECT ?siteQid ?image ?wikipediaUrlTitle WHERE {
