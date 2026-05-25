@@ -232,6 +232,7 @@ Object.keys(record.designations)
 
     let type = DESIGNATION_TYPES[designationQid];
 
+    // 1. Format Tahun Berdiri
     let infoTahunHtml = '';
     if (record.tahunBerdiri) {
       infoTahunHtml = `<p><b>Tahun Berdiri:</b> ${record.tahunBerdiri}</p>`;
@@ -239,16 +240,17 @@ Object.keys(record.designations)
       infoTahunHtml = `<p><b>Tahun Berdiri:</b> Data belum tersedia</p>`;
     }
 
-    // Gunakan P131 dari Wikidata jika ada, jika kosong baru gunakan fallback ORGS daerah
+    // 2. Format Terletak di (Dibuat seragam dengan tag <p> dan ditebalkan)
     let teksLokasi = record.lokasiSpesifik || ORGS[type.org];
+    let infoLokasiHtml = `<p><b>Terletak di:</b> ${teksLokasi}</p>`;
 
     designationsHtml +=
       '<li>' +
         `<h3>${type.name}</h3>` +
         '<div class="org">' +
-          `<img src="img/org_logo_${type.org.toLowerCase()}.svg">` + // Bagian gambar tetap dipertahankan
-          'Terletak di: ' + teksLokasi +  // Teks miring sekarang mengikuti properti P131 langsung
+          `<img src="img/org_logo_${type.org.toLowerCase()}.svg">` + // Gambar tetap dibiarkan di sini
         '</div>' +
+        infoLokasiHtml + // <--- Dimasukkan di sini agar sejajar dengan Tahun Berdiri
         infoTahunHtml +
       '</li>';
       
