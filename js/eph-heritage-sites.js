@@ -223,7 +223,7 @@ function generateRecordDetails(qid) {
     articleHtml = '<div class="article main-text nodata"><p>Situs ini belum memiliki artikel Wikipedia berbahasa Indonesia.</p></div>';
   }
 
-  let designationsHtml = '<h2>Informasi Lokasi</h2><ul class="designations">';
+  let designationsHtml = '<h2>Informasi</h2><ul class="designations">';
 Object.keys(record.designations)
   .map(qid => [qid, DESIGNATION_TYPES[qid].order]) 
   .sort((a, b) => a[1] - b[1])
