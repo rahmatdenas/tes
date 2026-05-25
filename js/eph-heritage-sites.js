@@ -96,16 +96,8 @@ function populateDesignationDetailsData() {
     SPARQL_QUERY_2,
     function(result) {
       let record = Records[result.siteQid.value];
-      let designationQid = result.designationQid.value;
-      
-      if ('partOf' in DESIGNATION_TYPES[designationQid]) {
-        designationQid = DESIGNATION_TYPES[designationQid].partOf;
-      }
-      if (!(designationQid in record.designations)) {
-        return;
-      };
 
-      // Langsung simpan tahunnya karena sudah dipotong oleh SPARQL
+      // Abaikan ID Kota, langsung tembak data tahunnya ke Record Situs!
       if (!record.tahunBerdiri && 'tahunBerdiri' in result) {
         record.tahunBerdiri = result.tahunBerdiri.value;
       }
