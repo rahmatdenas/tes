@@ -72,26 +72,8 @@ const SPARQL_QUERY_3 =
 
 // 7. ABOUT_SPARQL_QUERY: Disesuaikan menggunakan logika wilayah
 const ABOUT_SPARQL_QUERY =
-`SELECT ?site ?siteLabel ?designationLabel ?coord ?image ?wikipedia WHERE {
-  {
-    ?site wdt:P31 wd:Q32815 . # Masjid
-    ?site wdt:P131+ ?designation .
-    FILTER ( ?designation IN (
-      wd:Q7253, wd:Q7248, wd:Q7258
-    ))
-  }
-  OPTIONAL {
-    ?site p:P625 ?coordStatement .
-    ?coordStatement ps:P625 ?coord .
-    FILTER NOT EXISTS { ?coordStatement pq:P518 ?x }
-  }
-  OPTIONAL { ?site wdt:P18 ?image }
-  OPTIONAL {
-    ?wikipedia schema:about ?site ;
-               schema:isPartOf <https://id.wikipedia.org/> .
-  }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "id,en" }
-}`;
+`
+`;
 
 // Globals
 var DesignationIndex;
