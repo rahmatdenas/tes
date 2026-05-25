@@ -241,6 +241,19 @@ function generateRecordDetails(qid) {
   let titleHtml = `<h1>${record.title}</h1>`;
   let figureHtml = generateFigure(record.imageFilename);
 
+  // ====================================================================
+  // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
+  // ====================================================================
+  if (record.vicinityImages && record.vicinityImages.length > 0) {
+    record.vicinityImages.forEach(imgFilename => {
+      // Memanggil fungsi bawaan generateFigure() agar kosmetiknya
+      // (border, bayangan, kredit foto) otomatis sama persis.
+      // Diberi sela margin-top 20px agar jarak antar-gambar ke bawah rapi.
+      figureHtml += `<div style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
+    });
+  }
+  // ====================================================================
+
   let articleHtml;
   if (record.articleTitle) {
     articleHtml = '<div class="article main-text loading"><div class="loader"></div></div>';
@@ -250,38 +263,38 @@ function generateRecordDetails(qid) {
   }
 
   let designationsHtml = '<h2>Informasi</h2><ul class="designations">';
-Object.keys(record.designations)
-  .map(qid => [qid, DESIGNATION_TYPES[qid].order]) 
-  .sort((a, b) => a[1] - b[1])
-  .map(item => item[0])
-  .forEach(designationQid => {
+  Object.keys(record.designations)
+    .map(qid => [qid, DESIGNATION_TYPES[qid].order]) 
+    .sort((a, b) => a[1] - b[1])
+    .map(item => item[0])
+    .forEach(designationQid => {
 
-    let type = DESIGNATION_TYPES[designationQid];
+      let type = DESIGNATION_TYPES[designationQid];
 
-    // 1. Format Tahun Berdiri
-    let infoTahunHtml = '';
-    if (record.tahunBerdiri) {
-      infoTahunHtml = `<p>Didirikan: ${record.tahunBerdiri}</p>`;
-    } else {
-      infoTahunHtml = `<p>Didirikan: Data belum tersedia</p>`;
-    }
+      // 1. Format Tahun Berdiri
+      let infoTahunHtml = '';
+      if (record.tahunBerdiri) {
+        infoTahunHtml = `<p>Didirikan: ${record.tahunBerdiri}</p>`;
+      } else {
+        infoTahunHtml = `<p>Didirikan: Data belum tersedia</p>`;
+      }
 
-    // 2. Format Terletak di (Dibuat seragam dengan tag <p> dan ditebalkan)
-    let teksLokasi = record.lokasiSpesifik || ORGS[type.org];
-    let infoLokasiHtml = `<p>Terletak di: ${teksLokasi}</p>`;
+      // 2. Format Terletak di
+      let teksLokasi = record.lokasiSpesifik || ORGS[type.org];
+      let infoLokasiHtml = `<p>Terletak di: ${teksLokasi}</p>`;
 
-    designationsHtml +=
-      '<li>' +
-        `<h3>${type.name}</h3>` +
-        '<div class="org">' +
-          `<img src="img/org_logo_${type.org.toLowerCase()}.svg">` + // Gambar tetap dibiarkan di sini
-        '</div>' +
-        infoLokasiHtml + // <--- Dimasukkan di sini agar sejajar dengan Tahun Berdiri
-        infoTahunHtml +
-      '</li>';
-      
-  });
-  
+      designationsHtml +=
+        '<li>' +
+          `<h3>${type.name}</h3>` +
+          '<div class="org">' +
+            `<img src="img/org_logo_${type.org.toLowerCase()}.svg">` + 
+          '</div>' +
+          infoLokasiHtml + 
+          infoTahunHtml +
+        '</li>';
+        
+    });
+    
   designationsHtml += '</ul>';
 
   let panelElem = document.createElement('div');
@@ -289,7 +302,7 @@ Object.keys(record.designations)
     `<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/${qid}" title="Lihat di Wikidata">` +
     '<img src="img/wikidata_tiny_logo.png" alt="[Lihat item Wikidata]" /></a>' +
     titleHtml +
-    figureHtml +
+    figureHtml + // <--- Semua gambar (utama + tambahan) otomatis mengalir di sini
     articleHtml +
     designationsHtml;
   record.panelElem = panelElem;
