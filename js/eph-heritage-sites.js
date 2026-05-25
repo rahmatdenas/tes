@@ -241,21 +241,15 @@ function generateRecordDetails(qid) {
   let titleHtml = `<h1>${record.title}</h1>`;
   let figureHtml = generateFigure(record.imageFilename);
 
- // ====================================================================
-  // KODE BARU: SKENARIO PINTAR (TEKNIK NINJA, KOSMETIK PERAWAN 100%)
+  // ====================================================================
+  // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
     record.vicinityImages.forEach(imgFilename => {
-      
-      // Buat ID kardus pembungkus yang 100% aman dari spasi atau karakter aneh
-      let penandaAman = 'img-' + imgFilename.replace(/[^a-zA-Z0-9]/g, '');
-      
-      // KITA BUNGKUS DARI LUAR. Kosmetik generateFigure sama sekali TIDAK disentuh!
-      figureHtml += `<div id="${penandaAman}" style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
-      
-      // Panggil fungsi penarik kredit dengan jeda agar panel selesai dicetak
-      setTimeout(() => { ambilKreditMandiri(imgFilename, penandaAman, qid); }, 500);
-      
+      // Memanggil fungsi bawaan generateFigure() agar kosmetiknya
+      // (border, bayangan, kredit foto) otomatis sama persis.
+      // Diberi sela margin-top 20px agar jarak antar-gambar ke bawah rapi.
+      figureHtml += `<div style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
     });
   }
   // ====================================================================
@@ -441,38 +435,4 @@ class CompoundRecord extends Record {
     super(true);
     this.parts = []; 
   }
-}
-// ============================================================
-// FUNGSI TAMBAHAN UNTUK KREDIT FOTO MULTIPLE (TEKNIK NINJA)
-// ------------------------------------------------------------
-function ambilKreditMandiri(filename, penandaAman, qid) {
-  let url = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(filename)}&prop=imageinfo&iiprop=extmetadata&format=json&origin=*`;
-  
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      let pages = data.query.pages;
-      let page = Object.values(pages)[0];
-      let teksKredit = 'Kredit tidak diketahui';
-      
-      if (page && page.imageinfo && page.imageinfo[0].extmetadata) {
-        let meta = page.imageinfo[0].extmetadata;
-        let artist = meta.Artist ? meta.Artist.value.replace(/<[^>]*>?/gm, '').trim() : 'Unknown';
-        let license = meta.LicenseShortName ? meta.LicenseShortName.value : 'Copyright';
-        teksKredit = `${artist} [${license}]`;
-      }
-      
-      // EKSEKUSI NINJA: Cari kardus pembungkus di memori panel
-      let record = Records[qid];
-      if (record && record.panelElem) {
-        let bungkusKita = record.panelElem.querySelector(`#${penandaAman}`);
-        
-        // Jika kardusnya ketemu dan di dalamnya ada kata (Loading...)
-        if (bungkusKita && bungkusKita.innerHTML.includes('(Loading...)')) {
-          // Ganti murni teksnya saja, struktur HTML kosmetik tetap aman
-          bungkusKita.innerHTML = bungkusKita.innerHTML.replace('(Loading...)', teksKredit);
-        }
-      }
-    })
-    .catch(err => console.log('Gagal mengambil kredit'));
 }
