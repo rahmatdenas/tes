@@ -23,15 +23,13 @@ const DESIGNATION_TYPES = {
 
 // 4. SPARQL_QUERY_0: Mengambil data dan "menipu" variabel designation
 const SPARQL_QUERY_0 =
-`SELECT ?siteQid ?siteLabel ?designationQid ?tahunBerdiriMentah WHERE {
+`SELECT ?siteQid ?siteLabel ?designationQid WHERE {
   {
     ?site wdt:P31 wd:Q32815 . 
     ?site wdt:P131+ ?designation .
     FILTER ( ?designation IN ( wd:Q7253, wd:Q7248, wd:Q7258 ))
   }
   ?site rdfs:label ?siteLabel . FILTER(LANG(?siteLabel) = "id") .
-  
-  OPTIONAL { ?site wdt:P571 ?tahunBerdiriMentah . }
   
   BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
@@ -51,6 +49,14 @@ const SPARQL_QUERY_1 =
 // 6. SPARQL_QUERY_2: Disederhanakan HANYA untuk menarik tahun tanpa memfilter wilayah lagi
 
 // 7. SPARQL_QUERY_3: Tetap sama (Mengambil gambar dan link Wikipedia)
+const SPARQL_QUERY_2 =
+`SELECT ?siteQid ?waktu WHERE {
+  <SPARQLVALUESCLAUSE>
+  
+  ?site wdt:P571 ?waktu .
+  
+  BIND (SUBSTR(STR(?site), 32) AS ?siteQid) .
+}`;
 const SPARQL_QUERY_3 =
 `SELECT ?siteQid ?image ?wikipediaUrlTitle WHERE {
   <SPARQLVALUESCLAUSE>
