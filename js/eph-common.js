@@ -244,8 +244,16 @@ function generateFigure(filename, classNames = []) {
           }
           licenseHtml = ' ' + licenseHtml;
         }
-        let selector = `figure${classNames.length ? '.' : ''}${classNames.join('.')} figcaption`;
-        document.querySelector(selector).innerHTML = artistHtml + licenseHtml;
+        let captions = document.querySelectorAll(
+  `figure${classNames.length ? '.' : ''}${classNames.join('.')} figcaption`
+);
+
+for (let caption of captions) {
+  if (caption.innerHTML.includes('(Loading')) {
+    caption.innerHTML = artistHtml + licenseHtml;
+    break;
+  }
+}
       }
     );
 
