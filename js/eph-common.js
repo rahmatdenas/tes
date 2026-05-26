@@ -215,6 +215,8 @@ function displayRecordDetails(qid) {
 // the figure element will indicate "No photo available".
 function generateFigure(filename, classNames = []) {
   if (filename) {
+    // 1. Buat ID unik untuk setiap figure
+    let uniqueId = 'caption-' + Math.random().toString(36).substr(2, 9);
 
     // Fetch the image attribution asynchronously then add it to the figure element
     loadJsonp(
@@ -228,32 +230,33 @@ function generateFigure(filename, classNames = []) {
       },
       function(data) {
         let metadata = Object.values(data.query.pages)[0].imageinfo[0].extmetadata;
-        let artistHtml = metadata.Artist.value.trim();
-        // Remove all HTML except links
-        artistHtml = artistHtml.replace(/<(?!\/?a ?)[^>]+>/g, '');
-        if (artistHtml.search('href="//') >= 0) {
-          artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//g, 'href="https://');
+        
+        // Cek apakah metadata.Artist ada sebelum mengakses value-nya
+        let artistHtml = '';
+        if (metadata.Artist) {
+            artistHtml = metadata.Artist.value.trim();
+            artistHtml = artistHtml.replace(/<(?!\/?a ?)[^>]+>/g, '');
+            if (artistHtml.search('href="//') >= 0) {
+              artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//g, 'href="https://');
+            }
         }
+
         let licenseHtml = '';
-        if ('AttributionRequired' in metadata && metadata.AttributionRequired.value === 'true') {
+        if (metadata.AttributionRequired && metadata.AttributionRequired.value === 'true') {
           licenseHtml = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
           licenseHtml = licenseHtml.replace(/-/g, '&#8209;');
           licenseHtml = `[${licenseHtml}]`;
-          if ('LicenseUrl' in metadata) {
+          if (metadata.LicenseUrl) {
             licenseHtml = `<a href="${metadata.LicenseUrl.value}">${licenseHtml}</a>`;
           }
           licenseHtml = ' ' + licenseHtml;
         }
-        let captions = document.querySelectorAll(
-  `figure${classNames.length ? '.' : ''}${classNames.join('.')} figcaption`
-);
 
-for (let caption of captions) {
-  if (caption.innerHTML.includes('(Loading')) {
-    caption.innerHTML = artistHtml + licenseHtml;
-    break;
-  }
-}
+        // 2. Tembak langsung ke ID uniknya
+        let targetCaption = document.getElementById(uniqueId);
+        if (targetCaption) {
+            targetCaption.innerHTML = artistHtml + licenseHtml;
+        }
       }
     );
 
@@ -263,7 +266,8 @@ for (let caption of captions) {
         `<a href="${COMMONS_WIKI_URL_PREF}File:${encodedFilename}">` +
           `<img class="loading" src="${COMMONS_WIKI_URL_PREF}Special:FilePath/${encodedFilename}?width=300" alt="" onload="this.className=''">` +
         '</a>' +
-        '<figcaption>(Loading…)</figcaption>' +
+        // 3. Pasang ID unik di elemen figcaption
+        `<figcaption id="${uniqueId}">(Loading…)</figcaption>` +
       '</figure>'
     );
   }
