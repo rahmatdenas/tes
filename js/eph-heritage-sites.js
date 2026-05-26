@@ -87,9 +87,12 @@ function populateImageAndWikipediaData() {
       let record = Records[result.siteQid.value];
       
       // 1. Gambar Utama
-      if ('image' in result) {
-        record.imageFilename = extractImageFilename(result.image);
-      }
+if ('image' in result) {
+  // Hanya isi gambarnya JIKA variabel imageFilename masih kosong
+  if (!record.imageFilename) {
+    record.imageFilename = extractImageFilename(result.image);
+  }
+}
       
       // 2. Artikel Wikipedia
       if ('wikipediaUrlTitle' in result) {
