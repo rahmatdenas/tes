@@ -85,38 +85,41 @@ function populateImageAndWikipediaData() {
     SPARQL_QUERY_3,
     function(result) {
       let record = Records[result.siteQid.value];
+      if (!record) return;
       
-      // 1. Gambar Utama
       if ('image' in result) {
         record.imageFilename = extractImageFilename(result.image);
       }
       
-      // 2. Artikel Wikipedia
       if ('wikipediaUrlTitle' in result) {
         record.articleTitle = decodeURIComponent(result.wikipediaUrlTitle.value);
       }
 
-      // ====================================================================
-      // KODE BARU: SKENARIO PINTAR UNTUK GAMBAR LINGKUNGAN SEKITAR
-      // ====================================================================
-      
-      // Inisialisasi array daftar gambar tambahan jika belum ada
       if (!record.vicinityImages) {
         record.vicinityImages = [];
       }
 
-      // Masukkan gambar lingkungan sekitar ke dalam daftar (pastikan tidak duplikat)
       if ('vicinityImage' in result) {
         let fotoTambahan = extractImageFilename(result.vicinityImage);
-        if (!record.vicinityImages.includes(fotoTambahan)) {
-          record.vicinityImages.push(fotoTambahan);
+        
+        // Ambil data kredit dari hasil kueri jika ada
+        let artis = ('vicinityArtist' in result) ? result.vicinityArtist.value : 'Unknown';
+        let lisensi = ('vicinityLicense' in result) ? result.vicinityLicense.value : 'CC';
+        let teksKredit Lengkap = `${artis} [${lisensi}]`;
+
+        // Cek apakah foto sudah terdaftar agar tidak duplikat
+        let sudahAda = record.vicinityImages.some(item => item.filename === fotoTambahan);
+        
+        if (!sudahAda) {
+          record.vicinityImages.push({
+            filename: fotoTambahan,
+            kredit: teksKreditLengkap
+          });
         }
       }
-      // ====================================================================
     },
   );
 }
-
 function populateDesignationIndex() {
   DesignationIndex = { all: new DesignationIndexEntry };
   Object.keys(DESIGNATION_TYPES)
@@ -241,15 +244,21 @@ function generateRecordDetails(qid) {
   let titleHtml = `<h1>${record.title}</h1>`;
   let figureHtml = generateFigure(record.imageFilename);
 
-  // ====================================================================
-  // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
+// ====================================================================
+  // KODE BARU: SKENARIO PINTAR (KOSMETIK AMAN, KREDIT INSTAN JALAN)
   // ====================================================================
   if (record.vicinityImages && record.vicinityImages.length > 0) {
-    record.vicinityImages.forEach(imgFilename => {
-      // Memanggil fungsi bawaan generateFigure() agar kosmetiknya
-      // (border, bayangan, kredit foto) otomatis sama persis.
-      // Diberi sela margin-top 20px agar jarak antar-gambar ke bawah rapi.
-      figureHtml += `<div style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
+    record.vicinityImages.forEach(item => {
+      
+      // 1. Ambil HTML kosmetik asli bawaan template
+      let htmlBawaan = generateFigure(item.filename);
+      
+      // 2. Potong langsung kata (Loading...) dan ganti dengan kredit dari memori
+      let htmlSempurna = htmlBawaan.replace('(Loading...)', item.kredit);
+      
+      // 3. Masukkan ke susunan gambar ke bawah
+      figureHtml += `<div style="margin-top: 20px;">${htmlSempurna}</div>`;
+      
     });
   }
   // ====================================================================
