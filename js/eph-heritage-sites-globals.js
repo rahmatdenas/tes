@@ -94,5 +94,3 @@ const ABOUT_SPARQL_QUERY =
 // Globals
 var DesignationIndex;
 var Records = {}; // Memastikan Records dideklarasikan jika template membutuhkannya
-
-(PART 1)
