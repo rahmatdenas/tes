@@ -26,13 +26,19 @@ const DESIGNATION_TYPES = {
 const SPARQL_QUERY_0 =
 `SELECT ?siteQid ?siteLabel ?designationQid ?p131Label ?tahunBerdiriMentah WHERE {
   {
-    ?site wdt:P31 wd:Q32815 . 
+    # 1. Definisikan wilayahnya dulu agar pencarian lebih terarah
+    VALUES ?designation { wd:Q7253 wd:Q7248 wd:Q7258 }
+    
+    # 2. Beri instruksi ke server untuk tidak mencari ke seluruh dunia (Optimasi Kecepatan)
+    hint:Query hint:optimizer "None" .
+    
     ?site wdt:P131+ ?designation .
-    FILTER ( ?designation IN ( wd:Q7253, wd:Q7248, wd:Q7258 ))
+    ?site wdt:P31 wd:Q32815 .
   }
+  
+  # Tetap menggunakan filter bahasa asli bawaan Anda
   ?site rdfs:label ?siteLabel . FILTER(LANG(?siteLabel) = "id") .
   
-  # AMBIL P131 LANGSUNG DARI ENTITAS MASJID BESERTA LABEL INDONESIANYA
   OPTIONAL {
     ?site wdt:P131 ?p131Lokasi .
     ?p131Lokasi rdfs:label ?p131Label .
@@ -41,7 +47,7 @@ const SPARQL_QUERY_0 =
   
   OPTIONAL { ?site wdt:P571 ?tahunBerdiriMentah . }
   
-  BIND (SUBSTR(STR(?site       ), 32) AS ?siteQid       ) .
+  BIND (SUBSTR(STR(?site), 32) AS ?siteQid) .
   BIND (SUBSTR(STR(?designation), 32) AS ?designationQid) .
 } ORDER BY ?siteLabel`;
 
