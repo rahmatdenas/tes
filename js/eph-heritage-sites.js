@@ -244,14 +244,14 @@ function generateRecordDetails(qid) {
   // ====================================================================
   // KODE BARU: SKENARIO PINTAR UNTUK MENCETAK GAMBAR LINGKUNGAN SEKITAR
   // ====================================================================
-  if (record.vicinityImages && record.vicinityImages.length > 0) {
-    record.vicinityImages.forEach(imgFilename => {
-      // Memanggil fungsi bawaan generateFigure() agar kosmetiknya
-      // (border, bayangan, kredit foto) otomatis sama persis.
-      // Diberi sela margin-top 20px agar jarak antar-gambar ke bawah rapi.
-      figureHtml += `<div style="margin-top: 20px;">${generateFigure(imgFilename)}</div>`;
-    });
-  }
+if (record.vicinityImages && record.vicinityImages.length > 0) {
+  record.vicinityImages.forEach(imgFilename => {
+
+    // Tambahkan langsung tanpa pembungkus DIV
+    figureHtml += generateFigure(imgFilename);
+
+  });
+}
   // ====================================================================
 
   let articleHtml;
